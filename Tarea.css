@@ -1,0 +1,205 @@
+/* --- ESTILOS GENERALES (Copiados de Perfil.css) --- */
+@font-face {
+  font-family: 'Megapolis Extra';
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body{
+    font-family: 'Montserrat', sans-serif;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    flex-grow: 1; /* Para empujar el footer hacia abajo */
+}
+
+/* --- IMÁGENES DE FONDO (Posición exacta de Perfil.css) --- */
+.Corona_fondo {
+    scale: 100%;
+    position: fixed;
+    width: 65vw; 
+    top: 0vh;  
+    left: 35vw;
+    z-index: -1; 
+    transform: rotate(-35deg);
+}
+
+.tacha_fondo {
+    scale: 45%;
+    position: fixed;
+    width: 65vw; 
+    top: -20vh;  
+    right: 42vw;
+    z-index: -1; 
+    transform: rotate(-15deg);
+}
+
+/* --- TARJETA DE CONTENIDO DE TAREAS --- */
+/* Usaremos 'content-card' para mantener consistencia */
+.content-card {
+    background-color: #001f5c;
+    padding: 30px 40px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 800px; /* Hacemos la tarjeta más ancha para las tareas */
+    color: #333;
+    text-align: center;
+    z-index: 0;
+}
+
+.content-card h1 {
+    font-family: 'Megapolis Extra', sans-serif;
+    color: white;
+    margin-top: 0;
+    font-size: 2.5rem;
+}
+
+/* --- SISTEMA DE PESTAÑAS (Estilos adaptados) --- */
+.task-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.tablink {
+    background: #f0f0f0;
+    color: #555;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.tablink:hover {
+    background: #ddd;
+}
+
+.tablink.active {
+    background-color: #ffdd00;
+    color: #111;
+}
+
+.tabcontent {
+    background: #1a24ad;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 200px;
+    text-align: left;
+    font-size: 16px;
+    color: white;
+    display: none;
+    animation: fadeIn 0.5s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+input{
+    margin-top: 20px;
+    background-color: #ffdd00;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.modal{
+  /* Ocupa toda la pantalla */
+  position: fixed; 
+  z-index: 0; /* Se pone encima de todo */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* Permite scroll si el contenido es muy grande */
+  background-color: rgba(0,0,0,0.5); /* Fondo negro semi-transparente */
+  
+  /* Centra el contenido (el recuadro blanco) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oculto{
+    display: none;
+}
+
+.create-task{
+    background-color: #001f5c;
+    padding: 30px 40px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px; /* Hacemos la tarjeta más ancha para las tareas */
+    color: #f0f0f0;
+    text-align: center;
+    display: grid;
+    justify-content: center;
+}
+
+.create-task select{
+    margin-top: 20px;
+    background-color: #f0f0f0;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 20px;
+}
+
+.create-task input{
+    background-color: #f0f0f0;
+    margin-bottom: 20px;
+}
+
+.create-task input[type="Button"]{
+    background-color: #ffdd00;
+}
+
+.create-task input[type="Button"]:hover{
+    background-color: #a89200;
+}
+
+/* El botón de cerrar (la 'x') */
+.cerrar {
+  color: #f0f0f0;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 58px;
+  font-weight: bold;
+}
+
+.cerrar:hover,
+.cerrar:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* --- FOOTER --- */
+footer {
+    /* (Ya no tiene position: fixed ni bottom: 0) */
+    background-color: #001f5c;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    width: 100%;
+}

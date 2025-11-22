@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingniela - Perfil</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="Sesion.css"> 
+    <link rel="stylesheet" href="Perfil.css">
+</head>
+<body>
+    
+    <header>
+        <div class="logo">
+            <a href="IniciarSesion.html">
+                <img src="Imagenes/crown.png" alt="Kingniela Logo">
+            </a>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="Quiniela.html">Quinielas</a></li>
+                <li><a href="Social.html" class="notify">Social</a></li> 
+                <li><a href="Tarea.html" class="notify">Tareas</a></li>  
+                <li><a href="Coronas.html">Mis Coronas</a></li>
+            </ul>
+        </nav>
+
+        <div class="user-actions">
+            <div class="menu-icon">
+                <a href="Simulador.html">
+                    <img src="Imagenes/mundial_2026.png" alt="Simulador">
+                </a>
+            </div>
+            <div class="perfil">
+                <a href="Perfil.html">
+                    <img src="Imagenes/I_Perfil.png" alt="Perfil">
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+    <form>
+        <div class="form-header">
+            <img src="Imagenes/perfil_icon.png" alt="Icono de perfil"> <h2>Mi perfil</h2>
+        </div>
+        <hr>
+
+        <input type="text" name="Nombre" placeholder="Nombre" required>
+        <input type="text" name="Usuario" placeholder="Nombre de usuario" required>
+
+        <div class="form-group">
+            <label>Fecha de nacimiento</label>
+            <div class="date-selectors">
+                <select name="dia"><option>1</option></select>
+                <select name="mes"><option>Ene.</option></select>
+                <select name="año"><option>2025</option></select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Género</label>
+            <select name="Genero">
+                <option>Hombre</option>
+                <option>Mujer</option>
+            </select>
+        </div>
+        
+        <div class="upload-section">
+            <p>Agregar foto de Perfil</p>
+            <label for="foto-upload" class="btn-upload">Subir</label>
+            <input type="file" id="foto-upload" name="foto"> </div>
+
+        <input type="email" name="Correo" placeholder="Correo electrónico" required>
+        <input type="password" name="Contraseña" placeholder="Contraseña" required>
+
+        <button type="submit" class="btn-submit">Guardar Cambios</button>
+        <button type="submit" class="btn-logout">Cerrar sesión</button>
+    </form>
+    </main>
+
+    <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
+    <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
+</body>
+</html>

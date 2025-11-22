@@ -1,0 +1,105 @@
+/* --- ESTILOS GENERALES Y FUENTES --- */
+@font-face {
+  font-family: 'Megapolis Extra';
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2');
+}
+
+body{
+    font-family: 'Montserrat', sans-serif;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    flex-grow: 1;
+}
+
+/* --- IMÁGENES DE FONDO --- */
+.Corona_fondo {
+    scale: 100%; position: fixed; width: 65vw; top: 0vh; left: 35vw;
+    z-index: -1; transform: rotate(-35deg);
+}
+.tacha_fondo {
+    scale: 45%; position: fixed; width: 65vw; top: -20vh; right: 42vw;
+    z-index: -1; transform: rotate(-15deg); 
+}
+
+/* --- ESTILO PARA LAS TARJETAS DEL SIMULADOR --- */
+.sim-card {
+    background-color: #001f5c;
+    color: white;
+    padding: 30px 40px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.sim-card h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 25px;
+}
+
+/* Estilos para la tarjeta de Clave de Acceso */
+#access-key-card label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+#access-key-card input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 1px solid #ccc;
+    border-radius: 50px;
+    box-sizing: border-box;
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+#access-key-card button {
+    width: 100%;
+}
+
+/* Estilos para la tarjeta del Simulador */
+.jornada-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.jornada-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.jornada-item:last-child {
+    border-bottom: none;
+}
+.jornada-item h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: normal;
+}
+
+/* Botones genéricos */
+.btn-yellow, .btn-blue {
+    padding: 10px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+.btn-yellow { background-color: #ffdd00; color: #111; }
+.btn-yellow.simulated { cursor: not-allowed; filter: brightness(0.9); }
+.btn-blue { background-color: #4a5aff; color: white; }

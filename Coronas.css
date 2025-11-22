@@ -1,0 +1,189 @@
+/* --- ESTILOS GENERALES Y FUENTES --- */
+@font-face {
+  font-family: 'Megapolis Extra';
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2');
+}
+
+body{
+    font-family: 'Montserrat', sans-serif;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    flex-grow: 1;
+}
+
+/* --- IMÁGENES DE FONDO --- */
+.Corona_fondo {
+    scale: 100%; position: fixed; width: 65vw; top: 0vh; left: 35vw;
+    z-index: -1; transform: rotate(-35deg); 
+}
+.tacha_fondo {
+    scale: 45%; position: fixed; width: 65vw; top: -20vh; right: 42vw;
+    z-index: -1; transform: rotate(-15deg); 
+}
+
+/* --- TARJETA DE CONTENIDO DE CORONAS --- */
+.crowns-card {
+    background-color: #001f5c; /* Fondo azul oscuro como en el diseño */
+    color: white;
+    padding: 30px 40px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 700px;
+    max-height: 500px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box; 
+}
+
+.crowns-card h1 {
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 25px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Lista de coronas */
+.crowns-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    flex: 1; 
+    overflow-y: auto;  
+    overflow-x: hidden; 
+    padding-right: 8px; 
+}
+
+/* Cada item de la lista */
+.crown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 15px 20px;
+    border-radius: 15px;
+    border-left: 5px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.crown-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.crown-info img {
+    height: 45px;
+}
+
+.crown-text h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+.crown-text p {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Botones dentro de la lista */
+.crown-item button {
+    padding: 10px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+/* --- ESTILOS DE ESTADO --- */
+
+/* Estado Activo */
+.crown-item.active {
+    border-left-color: #ffdd00;
+}
+.btn-yellow {
+    background-color: #ffdd00;
+    color: #111;
+}
+.btn-yellow:hover {
+    filter: brightness(1.1);
+}
+
+/* Estado Disponible para Activar */
+.crown-item.available {
+    border-left-color: #4a5aff;
+}
+.btn-blue {
+    background-color: #4a5aff;
+    color: white;
+}
+.btn-blue:hover {
+    background-color: #3546d9;
+}
+
+/* Estado Bloqueado */
+.crown-item.locked {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+}
+.crown-item.locked .crown-text p {
+    color: rgba(255, 255, 255, 0.4);
+}
+.btn-locked {
+    background-color: #333;
+    color: #888;
+    cursor: not-allowed;
+}
+
+/* --- ESTILOS DE SCROLLBAR OCULTO PARA .crowns-list --- */
+
+.crowns-list {
+  scrollbar-width: thin;
+  scrollbar-color: #001f5c #001f5c; 
+
+  transition: scrollbar-color 0.3s ease-out;
+}
+
+.crowns-list:hover {
+  scrollbar-color: #ffdd00 #001f5c; 
+}
+
+
+.crowns-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.crowns-list::-webkit-scrollbar-track {
+  background: #001f5c; 
+  border-radius: 10px;
+}
+
+.crowns-list::-webkit-scrollbar-thumb {
+  background-color: #001f5c; 
+  border-radius: 10px;
+  transition: background-color 0.3s ease-out;
+}
+
+
+.crowns-list:hover::-webkit-scrollbar-thumb {
+  background-color: #ffdd00; 
+}
+
+.crowns-list:hover::-webkit-scrollbar-thumb:hover {
+  background-color: #ffee58; 
+}

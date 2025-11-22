@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingniela - Simulador</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="Sesion.css">
+    <link rel="stylesheet" href="Simulador.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="IniciarSesion.html"><img src="Imagenes/crown.png" alt="Kingniela Logo"></a>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="Quiniela.html">Quinielas</a></li>
+                <li><a href="Social.html" class="notify">Social</a></li>
+                <li><a href="Tarea.html" class="notify">Tareas</a></li>
+                <li><a href="Coronas.html">Mis Coronas</a></li>
+            </ul>
+        </nav>
+        <div class="user-actions">
+            <div class="menu-icon">
+                 <a href="Simulador.html"><img src="Imagenes/mundial_2026.png" alt="Simulador"></a>
+            </div>
+            <div class="perfil">
+                <a href="Perfil.html"><img src="Imagenes/I_Perfil.png" alt="Perfil"></a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="access-key-card" class="sim-card">
+            <h1>CLAVE DE ACCESO</h1>
+            <label for="access-key">Ingresa clave:</label>
+            <input type="text" id="access-key" placeholder="123#$A">
+            <button id="ingresar-btn" class="btn-yellow">INGRESAR</button>
+        </div>
+
+        <div id="simulator-card" class="sim-card" style="display: none;">
+            <h1>Simulador FIFA WORLD CUP 2026</h1>
+            <div class="jornada-list">
+                <div class="jornada-item">
+                    <h2>Jornada 1</h2>
+                    <button class="btn-yellow simulated">Simulado</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Jornada 2</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Jornada 3</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Dieciseisavos de final</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Octavos de final</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Cuartos de final</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Semifinal</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Tercer Puesto</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+                <div class="jornada-item">
+                    <h2>Final</h2>
+                    <button class="btn-blue">Simular</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Kingniela. Todos los derechos reservados.</p>
+    </footer>
+    
+    <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
+    <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
+    
+    <script src="Simulador.js"></script>
+</body>
+</html>

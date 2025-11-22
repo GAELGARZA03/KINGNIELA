@@ -1,0 +1,210 @@
+@font-face {
+  font-family: 'Megapolis Extra';
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* El body y main ya heredan estilos de Sesion.css, pero los definimos por si acaso */
+body{
+    font-family: 'Montserrat', sans-serif;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    flex-grow: 1;
+}
+
+/* --- IMÁGENES DE FONDO (Posición exacta de Perfil.css) --- */
+.Corona_fondo {
+    scale: 100%;
+    position: fixed;
+    width: 65vw; 
+    top: 0vh;  
+    left: 35vw;
+    z-index: -1; 
+    transform: rotate(-35deg);
+
+}
+
+.tacha_fondo {
+    scale: 45%;
+    position: fixed;
+    width: 65vw; 
+    top: -20vh;  
+    right: 42vw;
+    z-index: -1; 
+    transform: rotate(-15deg);
+
+}
+
+
+.quiniela {
+    height: 75vh;
+    width: 110vh;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 20px;
+}
+    
+.quiniela__aside {
+    background-color: #001f5c;
+    grid-row: span 6 / span 6;
+    padding: 10px;
+    border: 2px solid #001f5c7a;
+    border-radius: 3vh;
+    box-sizing: border-box;
+}
+
+.quiniela__aside aside {
+    height: 100%;           
+    display: flex;          
+    flex-direction: column; 
+}
+
+.quiniela__content {
+    background-color: #001f5c;
+    grid-column: span 5 / span 5;
+    grid-row: span 6 / span 6;
+    padding: 10px;
+    border: 2px solid #001f5c7a;
+    border-radius: 3vh;
+}
+
+.quiniela__aside ul {
+    padding: 10px;
+    margin: 0; 
+    list-style-type: none;
+
+   
+    flex: 1;                
+    overflow-y: auto;      
+    overflow-x: hidden;
+    box-sizing: border-box; 
+}
+
+.quiniela__aside ul {
+  scrollbar-width: thin;
+  scrollbar-color: #001f5c #001f5c; 
+  transition: scrollbar-color 0.3s ease-out;
+}
+
+
+.quiniela__aside ul:hover {
+  scrollbar-color: #ffdd00 #001f5c; 
+}
+
+
+.quiniela__aside ul::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quiniela__aside ul::-webkit-scrollbar-track {
+  background: #001f5c; 
+  border-radius: 10px;
+}
+
+.quiniela__aside ul::-webkit-scrollbar-thumb {
+  background-color: #001f5c; 
+  border-radius: 10px;
+  transition: background-color 0.3s ease-out;
+}
+
+.quiniela__aside ul:hover::-webkit-scrollbar-thumb {
+  background-color: #ffdd00; 
+}
+
+
+.quiniela__aside ul:hover::-webkit-scrollbar-thumb:hover {
+  background-color: #ffee58; 
+}
+
+
+#crear__quiniela{
+    background-color: white;
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    border: 0px;
+    border-radius: 50px;
+    line-height: 50px;
+    color: #001f5c;
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.quiniela__aside li{
+    background-color: rgb(200, 215, 85);
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    border: 0px;
+    border-radius: 5px;
+    line-height: 50px;
+    color: #001f5c;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.quiniela__content{
+    text-align: center;
+}
+
+.quiniela__content h2{
+    font-size: 36px;
+    margin-bottom: 30px;
+}
+
+.btn-primary{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #ffdd00; 
+    color: #111;
+    padding: 10px;
+}
+
+.btn-primary {
+    background-color: #ffdd00;
+    color: #122261;
+}
+.btn-primary:hover {
+    background-color: #e9c800;
+}
+
+.btn-secondary {
+    background-color: #ffdd00;
+    color: #111;
+}
+.btn-secondary:hover {
+    background-color: #e9c800;
+}
+
+.separator {
+    border: none;
+    height: 1px;
+    width: 70%;
+    background-color: #1a24ad;
+    margin: 25px 0;
+    margin-left: 15%;
+}
+
+.quiniela__content button{
+    padding: 15px;
+    border: 1px solid black;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.quiniela__content input{
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+
+}

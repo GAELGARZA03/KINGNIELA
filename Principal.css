@@ -1,0 +1,182 @@
+/* Reseteo básico */
+/* --- ESTILOS GENERALES Y DE FONDO --- */
+@font-face {
+  font-family: 'Megapolis Extra'; /* El nombre que le das a tu fuente */
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2'); /* Ruta al archivo */
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Monserrat', sans-serif;
+    background: radial-gradient(ellipse farthest-corner at center, #2433FF, #262C80);
+    color: white; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1{
+    font-family: 'Megapolis Extra', sans-serif;
+    font-size: 60pt;
+}
+
+.Kingniela{
+    scale: 150%;
+}
+
+
+.Corona_fondo {
+    position: fixed; /* Fija la imagen a la ventana */
+    width: 65vw; 
+    top: -35vh;  
+    right: -20vw;
+    z-index: -1; 
+
+    transform: rotate(30deg);
+}
+.container {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 1200px;
+}
+
+/* Columna izquierda */
+.Izuqierda {
+    flex: 1;
+    padding: 20px;
+    text-align: center;
+}
+
+.Izuqierda img {
+    width: 250px;
+    margin: 20px 0;
+    border-radius: 10px;
+}
+
+/* Columna derecha (sin cambios necesarios aquí) */
+.Derecha {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Formulario con bordes más redondeados y sin color de texto */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 80%;
+    max-width: 350px; /* Un poco más ancho */
+    background-color: white;
+    padding: 40px; /* Más espacio interior */
+    border-radius: 25px; /* Bordes mucho más redondeados */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Inputs con nuevo estilo */
+input[type="text"],
+input[type="password"] {
+    padding: 15px;
+    border: 1px solid #e0e0e0; /* Borde sutil */
+    border-radius: 8px; /* Bordes redondeados */
+    background-color: #f7f7f7; /* Fondo gris claro */
+    font-size: 16px;
+}
+
+/* Checkbox (sin cambios) */
+.checkbox {
+    font-size: 14px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Estilo general para botones (se quitaron estilos específicos) */
+button {
+    padding: 15px;
+    border: none;
+    border-radius: 50px; /* Bordes totalmente redondeados (píldora) */
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Botón de Iniciar Sesión (azul) */
+.btn-primary {
+    background-color: #192f8a; /* Azul oscuro del diseño */
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #122261; /* Tono más oscuro */
+}
+
+/* Botón de Registrarse (amarillo) */
+.btn-secondary {
+    background-color: #ffdd00; /* Amarillo del diseño */
+    color: #111; /* Texto oscuro */
+    border: 1px solid #e0c200;
+    border-radius: 8px; /* Bordes ligeramente redondeados */
+}
+.btn-secondary:hover {
+    background-color: #e9c800;
+}
+
+/* Enlace de "Olvidaste tu contraseña" */
+.forgot-password {
+    color: #555;
+    font-size: 12px;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 5px;
+}
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* Línea separadora */
+.separator {
+    border: none;
+    height: 1px;
+    background-color: #eeeeee;
+    margin: 10px 0;
+}
+
+footer {
+    background-color: #002244;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    position: fixed;   /* Hace que siempre quede abajo */
+    bottom: 0;
+    width: 100%;
+    font-size: 14px;
+}
+
+footer nav {
+    margin-top: 5px;
+}
+
+footer nav a {
+    color: #ffcc00;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+footer nav a:hover {
+    text-decoration: underline;
+}
+
+
+

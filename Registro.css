@@ -1,0 +1,169 @@
+@font-face {
+  font-family: 'Megapolis Extra'; /* El nombre que le das a tu fuente */
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2'); /* Ruta al archivo */
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+    margin: 0;
+    font-family: 'Monserrat', sans-serif;
+    background: radial-gradient(ellipse farthest-corner at center, #2433FF, #262C80);
+    background-attachment: fixed;
+    color: white;
+    padding-bottom: 50px; /* Espacio para que el form no choque abajo */
+    
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+}
+
+.Kingniela{
+    scale: 70%;
+}
+
+.Corona_fondo {
+    scale: 130%;
+    position: fixed; /* Fija la imagen a la ventana */
+    width: 65vw; 
+    top: 0vh;  
+    right: 10vw;
+    z-index: -1; 
+
+    transform: rotate(-30deg);
+}
+
+.tacha_fondo {
+    scale: 40%;
+    position: fixed; /* Fija la imagen a la ventana */
+    width: 65vw; 
+    top: -50vh;  
+    right: 45vw;
+    z-index: -1; 
+
+    transform: rotate(-30deg);
+}
+
+header h1 {
+    font-family: 'Megapolis Extra', sans-serif;
+    margin: 0;
+    font-size: 50px;
+    font-weight: bold;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+form {
+    background-color: white;
+    padding: 40px;
+    border-radius: 25px; 
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 370px; 
+    color: #333; 
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+}
+
+form h2 {
+    color: #111;
+    font-size: 24px;
+    margin: 0;
+}
+
+form hr {
+    border: none;
+    height: 1px;
+    background-color: #e0e0e0;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 50px; 
+    box-sizing: border-box; 
+    font-size: 16px;
+}
+
+
+.form-group {
+    text-align: left; 
+    width: 100%;
+}
+.form-group label {
+    font-size: 14px;
+    color: #555;
+    margin-left: 15px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+
+.date-selectors {
+    display: flex;
+    gap: 10px; 
+}
+.date-selectors select {
+    flex: 1; 
+}
+
+
+form select {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 10px; 
+    font-size: 16px;
+    box-sizing: border-box;
+    -webkit-appearance: none; 
+    -moz-appearance: none;
+    appearance: none;
+    background: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 15px center;
+    background-size: 20px;
+    background-color: white;
+}
+
+
+form button {
+    width: 100%;
+    padding: 15px;
+    background-color: #ffdd00; 
+    color: #111;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50px; 
+    margin-top: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #e9c800;
+}
+
+.login-link {
+    color: #2433FF;
+    text-decoration: none;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}

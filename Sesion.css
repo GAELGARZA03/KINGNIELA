@@ -1,0 +1,240 @@
+/* --- ESTILOS GENERALES Y DE FONDO --- */
+@font-face {
+  font-family: 'Megapolis Extra'; /* El nombre que le das a tu fuente */
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2'); /* Ruta al archivo */
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background: radial-gradient(ellipse farthest-corner at center, #2433ff, #1a24ad);
+    background-attachment: fixed;
+    color: white;
+    
+    /* === INICIA EL CAMBIO === */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Asegura que el body ocupe al menos toda la altura de la pantalla */
+}
+
+.logo a {
+    border: none; /* Quita cualquier borde no deseado */
+    text-decoration: none; /* Quita cualquier subrayado */
+}
+
+/* --- ENCABEZADO / BARRA DE NAVEGACIÓN --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.Corona_fondo {
+    /* Posicionamiento y centrado */
+    position: absolute;
+    top: 50%;
+    left: 65%;
+    transform: translate(-50%, -50%) rotate(20deg); /* Centra y rota la imagen */
+    z-index: -1; /* La envía detrás del texto */
+
+    /* Estilo y tamaño */
+    width: 18vw; /* Ajusta el tamaño como necesites */
+
+}
+
+.flecha {
+    /* Posicionamiento y centrado */
+    scale: 65%;
+    position: absolute;
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%) rotate(15deg); /* Centra y rota la imagen */
+    z-index: -1; /* La envía detrás del texto */
+
+    /* Estilo y tamaño */
+    width: 18vw; /* Ajusta el tamaño como necesites */
+
+}
+
+.sponsor {
+    /* Posicionamiento y centrado */
+    scale: 65%;
+    position: absolute;
+    top: 0%;
+    left: 63%;
+    transform: translate(-50%, -50%); /* Centra y rota la imagen */
+    z-index: -1; /* La envía detrás del texto */
+
+    /* Estilo y tamaño */
+    width: 18vw; /* Ajusta el tamaño como necesites */
+
+}
+
+.hashtag {
+    /* Posicionamiento y centrado */
+    scale: 40%;
+    position: absolute;
+    top: -20%;
+    left: 28%;
+    transform: translate(-50%, -50%) rotate(10deg); /* Centra y rota la imagen */
+    z-index: -1; /* La envía detrás del texto */
+
+    /* Estilo y tamaño */
+    width: 18vw; /* Ajusta el tamaño como necesites */
+
+}
+
+.logo img {
+    height: 50px; /* Ajusta el tamaño de tu logo */
+}
+
+/* Menú de navegación */
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 10px;
+}
+
+nav ul li a {
+    display: block;
+    padding: 10px 25px;
+    border: 2px solid #1a24ad;
+    border-radius: 50px; /* Botones tipo píldora */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    position: relative; /* Para la notificación */
+}
+
+nav ul li a:hover {
+    background-color: #FFD224;
+    color: #001f5c;
+    border-color: #FFD224;
+}
+
+/* Círculo de notificación */
+.notify::after {
+    content: '9+';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #FFD224;
+    color: #1a24ad;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Acciones de usuario a la derecha */
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.perfil img, .menu-icon img {
+    height: 45px;
+    width: 45px;
+    border-radius: 50%;
+    border: 5px solid #1a24ad;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.user-actions img:hover {
+    transform: scale(1.1);
+}
+
+/* --- SECCIÓN PRINCIPAL (HERO) --- */
+main {
+    padding: 40px;
+    
+    /* Esta línea hace que el contenido principal se estire */
+    flex-grow: 1; 
+}
+
+.hero-section {
+    text-align: center;
+    position: relative;
+    margin-bottom: 60px;
+}
+
+.hero-section h1 {
+    font-family: 'Megapolis Extra', sans-serif;
+    font-size: 6vw; /* Tamaño de fuente responsivo */
+    line-height: 1.1;
+    font-weight: 900;
+    color: #ffffff; /* Color amarillo */
+    text-shadow: 3px 3px 0px #000; /* Sombra para dar contorno */
+    margin: 0;
+    
+}
+
+.fifa-logo {
+    scale: 10%;
+    position: absolute;
+    top: 0;
+    right: 15%; /* Posición del logo FIFA */
+    width: 120px;
+}
+
+/* --- SECCIÓN DE TARJETAS DE CARACTERÍSTICAS --- */
+.features-section {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap; /* Para que se ajuste en pantallas pequeñas */
+}
+
+.feature-card {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a24ad;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    width: 280px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.feature-card img {
+    scale: 200%;
+    height: 150px;
+    margin-bottom: 10px;
+}
+
+.feature-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.feature-card p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+
+
+/* --- FOOTER --- */
+footer {
+    /* (Ya no tiene position: fixed ni bottom: 0) */
+    background-color: #001f5c;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    width: 100%;
+}

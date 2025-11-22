@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingniela - Página Principal</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="Principal.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="Izuqierda">
+            <img class="Kingniela" src="Imagenes/Kingniela.png" alt="">
+
+            <h5>¡Bienvenido a la mejor plataforma de quinielas!</h5>
+            <h5>¡Registrate hoy GRATIS!</h5>
+
+            <img src="Imagenes/mundial_2026.png" alt="Mundial 2026">
+
+            <p>¡Aquí se juega la FIFA World Cup 2026!</p>
+        </div>
+
+        <div class="Derecha">
+    <form id="loginForm">
+        <input type="text" id="loginIdentifier" placeholder="Correo electrónico o Usuario" required>
+        <input type="password" id="loginPassword" placeholder="Contraseña" required>
+
+        <label class="checkbox">
+            <input type="checkbox"> Recordar usuario
+        </label>
+    
+        <button type="submit" class="btn-primary">Iniciar sesión</button>
+    
+        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+    
+        <hr class="separator"> 
+        <button type="button" onclick="window.location.href='Registro.html'" class="btn-secondary">Registrarse</button>
+    </form>
+</div>
+<img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
+
+<script src="js/auth.js"></script> 
+</body>
+</html>

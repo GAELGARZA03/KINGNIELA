@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingniela - Registro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="Registro.css">
+</head>
+<body>
+    <header>
+        <img class="Kingniela" src="Imagenes/Kingniela.png" alt="">
+    </header>
+
+    <main>
+        <form id="registerForm">
+            <h2>Crea una cuenta</h2>
+            <hr> 
+            <input type="text" id="registerName" name="Nombre" placeholder="Nombre" required>
+            <input type="text" id="registerUser" name="Usuario" placeholder="Nombre de usuario" required>
+
+            <div class="form-group">
+                <label for="dia">Fecha de nacimiento</label>
+                <div class="date-selectors">
+                    <select name="dia" id="dia">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                    <select name="mes" id="mes">
+                        <option value="1">Ene.</option>
+                        <option value="2">Feb.</option>
+                    </select>
+                    <select name="año" id="año">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="Genero">Género</label>
+                <select name="Genero" id="Genero">
+                    <option value="Hombre">Hombre</option>
+                    <option value="Mujer">Mujer</option>
+                    <option value="Otro">Prefiero no decirlo</option>
+                </select>
+            </div>
+
+            <input type="email" id="registerEmail" name="Correo" placeholder="Correo electrónico" required>
+            <input type="password" id="registerPassword" name="Contraseña" placeholder="Contraseña" required>
+
+            <button type="submit">Registrarse</button>
+
+            <a href="Principal.html" class="login-link">¿Ya tienes una cuenta?</a>
+        </form>
+    </main>
+
+    <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
+    <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
+    <script src="js/auth.js"></script>
+</body>
+</html>
