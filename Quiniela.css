@@ -43,7 +43,7 @@ main {
 
 
 .quiniela {
-    height: 75vh;
+    height: 85vh;
     width: 110vh;
     padding: 20px;
     display: grid;
@@ -208,3 +208,221 @@ main {
     text-align: center;
 
 }
+
+/* --- REUTILIZAMOS ESTILOS BASE --- */
+
+.hidden {
+    display: none !important;
+}
+
+/* Formulario Crear Quiniela */
+#create-quiniela-view {
+    text-align: left;
+    padding: 0 40px;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.form-section {
+    margin-bottom: 20px;
+}
+
+.section-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: white;
+}
+
+.input-full {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    text-align: left !important; /* Sobrescribimos el center general */
+}
+
+/* --- SELECTOR DE TIPO (RADIOS PERSONALIZADOS) --- */
+.type-selector {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-hidden {
+    display: none;
+}
+
+.type-option {
+    flex: 1;
+    background-color: #1a24ad;
+    padding: 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
+    position: relative;
+    color: white;
+}
+
+/* Cuadrito simulado de check */
+.checkmark {
+    height: 20px;
+    width: 20px;
+    background-color: #001f5c;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    position: relative;
+}
+
+/* Estado SELECCIONADO */
+.radio-hidden:checked + .type-option {
+    border-color: #ffdd00;
+    background-color: #151d8a;
+}
+
+.radio-hidden:checked + .type-option .checkmark {
+    background-color: #ffdd00;
+    border-color: #ffdd00;
+}
+
+/* Check interior */
+.radio-hidden:checked + .type-option .checkmark::after {
+    content: '✔';
+    position: absolute;
+    color: black;
+    font-size: 14px;
+    top: -2px;
+    left: 3px;
+}
+
+/* --- BOTONES --- */
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 20px;
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 2px solid #ff4d4d;
+    color: #ff4d4d;
+    padding: 10px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-cancel:hover { background: rgba(255, 77, 77, 0.1); }
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+}
+
+/* --- MODALES --- */
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #001f5c;
+    padding: 30px;
+    border-radius: 25px;
+    width: 400px;
+    color: white;
+    position: relative;
+    text-align: center;
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+.cerrar-modal {
+    position: absolute;
+    top: 10px; right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* Modal Miembros */
+.members-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 20px 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.member-item label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.member-item img {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+}
+
+.search-bar-modal input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    margin-bottom: 10px;
+}
+
+/* Modal Éxito */
+.code-display {
+    background: #1a24ad;
+    padding: 15px;
+    border-radius: 15px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    border: 2px dashed #ffdd00;
+}
+
+.code-display h1 {
+    margin: 0;
+    letter-spacing: 5px;
+    font-family: 'Montserrat', sans-serif;
+    color: #ffdd00;
+}
+
+.btn-copy {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.btn-copy:active { transform: scale(0.9); }
+
+.btn-full { width: 100%; }
