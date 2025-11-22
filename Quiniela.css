@@ -65,6 +65,7 @@ main {
     flex-direction: column; 
 }
 
+/* --- CONTENEDOR PRINCIPAL (SCROLL CORREGIDO) --- */
 .quiniela__content {
     background-color: #001f5c;
     grid-column: span 5 / span 5;
@@ -72,7 +73,43 @@ main {
     padding: 10px;
     border: 2px solid #001f5c7a;
     border-radius: 3vh;
+    
+    /* PROPIEDADES DE SCROLLBAR PARA CONTENIDO DESBORDADO */
+    overflow-y: auto;
+    overflow-x: hidden;
+    
+    scrollbar-width: thin;
+    scrollbar-color: #001f5c #001f5c; 
+    transition: scrollbar-color 0.3s ease-out;
 }
+
+.quiniela__content:hover {
+  scrollbar-color: #ffdd00 #001f5c; 
+}
+
+.quiniela__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quiniela__content::-webkit-scrollbar-track {
+  background: #001f5c; 
+  border-radius: 10px;
+}
+
+.quiniela__content::-webkit-scrollbar-thumb {
+  background-color: #001f5c; 
+  border-radius: 10px;
+  transition: background-color 0.3s ease-out;
+}
+
+.quiniela__content:hover::-webkit-scrollbar-thumb {
+  background-color: #ffdd00; 
+}
+
+.quiniela__content:hover::-webkit-scrollbar-thumb:hover {
+  background-color: #ffee58; 
+}
+
 
 /* --- LISTA LATERAL (SCROLLBAR) --- */
 .quiniela__aside ul {
