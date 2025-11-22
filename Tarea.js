@@ -58,6 +58,20 @@ const misTareas = [
         grupo: "Mundial 2026 Fantasy",
         fecha: "2025-12-01T16:00", // Fecha futura (Próxima)
         completada: false
+    },
+    {
+        id: 5,
+        nombre: "Jornada 2",
+        grupo: "Mundial 2026 Fantasy",
+        fecha: "2025-12-01T16:00", // Fecha futura (Próxima)
+        completada: false
+    },
+    {
+        id: 6,
+        nombre: "Jornada 2",
+        grupo: "Mundial 2026 Fantasy",
+        fecha: "2025-12-01T16:00", // Fecha futura (Próxima)
+        completada: false
     }
 ];
 

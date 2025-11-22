@@ -350,3 +350,457 @@ main {
   cursor: pointer;
 }
 
+/* --- REUTILIZAMOS ESTILOS DE SESION.CSS Y AJUSTES ESPECÍFICOS --- */
+
+/* --- ESTILOS GENERALES Y MODIFICACIONES --- */
+
+.social-container {
+    display: flex;
+    background: #1a24ad;
+    border-radius: 20px;
+    width: 900px; 
+    height: 500px; 
+    overflow: hidden; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    /* ... (Mismos estilos) ... */
+    flex: 1;
+    background: #001f5c;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.direct-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user {
+    /* ... (Mismos estilos) ... */
+    background: transparent;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    color: white;
+    max-width: 100%; 
+    box-sizing: border-box;
+}
+
+.user:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+}
+
+/* CAMBIO CLAVE: Usamos .profile-pic en lugar de 'img' genérico */
+.user .profile-pic {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: white;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.user span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- MAIN --- */
+.main {
+    flex: 2.5; 
+    background: #1a24ad;
+    display: flex;
+    flex-direction: column;
+    position: relative; 
+    overflow: hidden; 
+}
+
+/* VISTAS */
+#friends-view {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden; 
+}
+
+.friend-list {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    padding-right: 5px; 
+}
+
+.friend {
+    background: #001f5c;
+    border-radius: 12px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s;
+    margin-right: 2px; 
+}
+
+.friend:hover {
+    transform: translateX(3px);
+}
+
+.friend-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.friend-info .profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+}
+
+.friend-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: gray;
+    display: inline-block;
+}
+.friend-status.online { background-color: #00ff26; }
+
+.friend-actions button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.friend-actions button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.friend-actions button.delete-friend:hover {
+    color: #ff4d4d;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+/* CHAT */
+#chat-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #151d8a; 
+    overflow: hidden;
+}
+
+.chat-header {
+    background-color: #001f5c;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0; 
+}
+
+.status-text {
+    font-size: 10px;
+    color: #00ff26; 
+}
+
+.cerrar-chat {
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 5px;
+}
+.cerrar-chat:hover { color: #ffdd00; }
+
+.chat-body {
+    flex: 1; 
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.chat-input-area {
+    padding: 15px;
+    background-color: #001f5c;
+    position: relative; 
+    flex-shrink: 0;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 25px;
+    padding: 5px 10px;
+}
+
+.btn-options {
+    background: #ffdd00;
+    color: #001f5c;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+    transition: background 0.2s;
+}
+.btn-options:hover { background: #e6c700; }
+
+.chat-input-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    padding: 8px;
+}
+
+.send-btn {
+    background: transparent;
+    border: none;
+    color: #ffdd00;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.chat-options-menu {
+    position: absolute;
+    bottom: 70px; 
+    left: 20px;
+    background: white;
+    border-radius: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 10;
+    width: 150px;
+}
+
+.chat-options-menu button {
+    background: white;
+    color: #001f5c;
+    border: none;
+    padding: 10px;
+    text-align: left;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.chat-options-menu button:hover {
+    background: #f0f0f0;
+}
+
+.chat-options-menu::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 15px;
+    border-width: 8px 8px 0;
+    border-style: solid;
+    border-color: white transparent;
+    display: block;
+    width: 0;
+}
+
+/* --- MODALES (Compartidos) --- */
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: #001f5c;
+    padding: 30px;
+    border-radius: 25px;
+    width: 400px;
+    text-align: center;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.1);
+    color: white;
+}
+
+.cerrar-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 30px;
+    color: white;
+    cursor: pointer;
+}
+
+.modal-input {
+    width: 90%;
+    padding: 12px;
+    border-radius: 20px;
+    border: none;
+    margin: 20px 0;
+}
+
+.modal-btn {
+    padding: 10px 30px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* ESTILOS ESPECÍFICOS MODAL ELIMINAR */
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.modal-btn.cancel {
+    background-color: #ccc;
+    color: #333;
+}
+.modal-btn.cancel:hover {
+    background-color: #bbb;
+}
+
+.modal-btn.delete {
+    background-color: #ff4d4d;
+    color: white;
+}
+.modal-btn.delete:hover {
+    background-color: #cc0000;
+}
+
+
+/* SCROLLBAR PERSONALIZADO */
+.sidebar, .friend-list, .chat-body {
+  scrollbar-width: thin;
+  scrollbar-color: #001f5c #001f5c;
+  transition: scrollbar-color 0.3s ease-out;
+  overscroll-behavior: contain; /* Evita que se mueva toda la página al llegar al final */
+}
+
+.sidebar:hover, .friend-list:hover, .chat-body:hover {
+  scrollbar-color: #ffdd00 #001f5c; 
+}
+
+.sidebar::-webkit-scrollbar, 
+.friend-list::-webkit-scrollbar, 
+.chat-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track, 
+.friend-list::-webkit-scrollbar-track, 
+.chat-body::-webkit-scrollbar-track {
+  background: #001f5c; 
+  border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb, 
+.friend-list::-webkit-scrollbar-thumb, 
+.chat-body::-webkit-scrollbar-thumb {
+  background-color: #001f5c;
+  border-radius: 10px;
+  transition: background-color 0.3s ease-out;
+}
+
+.sidebar:hover::-webkit-scrollbar-thumb, 
+.friend-list:hover::-webkit-scrollbar-thumb, 
+.chat-body:hover::-webkit-scrollbar-thumb {
+  background-color: #ffdd00; 
+}
+
+.sidebar:hover::-webkit-scrollbar-thumb:hover, 
+.friend-list:hover::-webkit-scrollbar-thumb:hover, 
+.chat-body:hover::-webkit-scrollbar-thumb:hover {
+  background-color: #ffee58; 
+}
+
+
+/* ==========================================================================
+   ESTILOS DE LA INSIGNIA (CORONA) Y ALINEACIÓN
+   ==========================================================================
+*/
+
+.name-container {
+    display: flex;
+    align-items: center;
+    gap: 6px; 
+}
+
+.crown-badge {
+    /* Base style */
+    width: auto !important; /* IMPORTANTE: Previene que herede los 35px/40px */
+    vertical-align: middle; 
+    display: inline-block;
+    background: transparent !important; 
+    border-radius: 0 !important;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); 
+}
+
+/* AJUSTES POR ZONA */
+
+/* 1. Lista Principal (Amigos) */
+.friend-list .crown-badge {
+    height: 12px; /* Tamaño mediano */
+}
+
+/* 2. Barra Lateral (Chats Activos) */
+.sidebar .crown-badge {
+    height: 10px; /* Tamaño miniatura para que no se corte */
+    margin-left: 4px;
+}
+
+/* 3. Encabezado de Chat (Grande/Normal) */
+.chat-header .crown-badge {
+    height: 14px; 
+}

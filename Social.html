@@ -34,100 +34,92 @@
                 <div class="perfil">
                     <a href="Perfil.html"><img src="Imagenes/I_Perfil.png" alt="Perfil"></a>
                 </div>
-                
             </div>
     </header>
 
 <main>
 <div class="social-container">
-    <!-- Columna izquierda -->
+    
     <div class="sidebar">
-      <h2>Chats</h2>
-      <div class="direct-messages">
-        <div class="user"><img /><span>[Nombre de usuario]</span></div>
-      </div>
+      <h2>Chats Activos</h2>
+      <div class="direct-messages" id="chat-list-container">
+        </div>
     </div>
 
-    <!-- Columna derecha -->
     <div class="main">
-      <div class="top-buttons">
-        <button class="active">En línea</button>
-        <button>Todos</button>
-        <button class="add-friend">Añadir amigo</button>
+      
+      <div id="friends-view">
+          <div class="top-buttons">
+            <button id="btn-online" onclick="filterFriends('online')">En línea</button>
+            <button id="btn-all" class="active" onclick="filterFriends('all')">Todos</button>
+            <button class="add-friend" onclick="openAddFriendModal()">Añadir amigo</button>
+          </div>
+
+          <div class="search-box">
+            <input type="text" id="search-friends" placeholder="Buscar amigo..." onkeyup="searchFriends()" />
+          </div>
+
+          <div class="friend-list" id="friends-grid">
+            </div>
       </div>
 
-      <div class="search-box">
-        <input type="text" placeholder="Buscar" />
+      <div id="chat-view" class="hidden">
+            <div class="chat-header">
+                <div class="user-info">
+                    <div class="user-avatar" id="chat-current-avatar"></div>
+                    <div>
+                        <p class="user-name" id="chat-current-name">Nombre Usuario</p>
+                        <span class="status-text" id="chat-current-status">En línea</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <span class="cerrar-chat" onclick="closeChat()">✕</span>
+                </div>
+            </div>
+
+            <div class="chat-body" id="chat-messages">
+                </div>
+
+            <div class="chat-input-area">
+                <div class="chat-options-menu hidden" id="chat-options-menu">
+                    <button onclick="alert('Subir archivo')">📂 Archivo</button>
+                    <button onclick="alert('Enviar audio')">🎤 Audio</button>
+                    <button onclick="alert('Enviar ubicación')">📍 Ubicación</button>
+                </div>
+
+                <div class="chat-input-wrapper">
+                    <button class="btn-options" onclick="toggleChatOptions()">+</button>
+                    <input type="text" placeholder="Escribe un mensaje..." id="message-input">
+                    <button class="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
       </div>
-
-      <div class="friend-list">
-        <div class="friend">
-        <span><img /><strong>[Nombre de usuario]</strong></span>
-            <div class="friend--button">
-                <button>💬</button>
-                <button>⋯</button>
-            </div>
-        </div>
-        <div class="friend">
-        <span><img /><strong>[Nombre de usuario]</strong></span>
-            <div class="friend--button">
-                <button>💬</button>
-                <button>⋯</button>
-            </div>
-        </div>
     </div>
+</div>
+
+<div id="addFriendModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="cerrar-modal" onclick="closeAddFriendModal()">&times;</span>
+        <h2>Añadir Nuevo Amigo</h2>
+        <p>Busca por nombre de usuario o correo</p>
+        <input type="text" placeholder="Ej. JuanPerez123" class="modal-input">
+        <button class="btn-primary modal-btn" onclick="alert('Solicitud enviada (Simulación)')">Enviar Solicitud</button>
     </div>
+</div>
 
-    <div class="chat">
-    <div class="chat-header">
-            <div class="user-info">
-                <div class="user-avatar"></div>
-                <p class="user-name">[Nombre de usuario]</p>
-                <span class="status-dot"></span>
-            </div>
-            <div class="video-icon">
-                <i class="camera">📷</i>
-            </div>
-            <span id="cerrarRecuadroBtn" class="cerrar">&times;</span>
-        </div>
-
-        <!-- Mensajes -->
-        <div class="chat-body">
-            <div class="message received">
-                <div class="avatar"></div>
-                <div class="message-content">
-                    <p class="message-title">Ejemplito</p>
-                    <p class="message-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus</p>
-                    <span class="time">11:11 pm</span>
-                </div>
-            </div>
-
-            <div class="message sent">
-                <div class="message-content">
-                    <p class="message-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus</p>
-                    <span class="time">11:11 pm</span>
-                </div>
-            </div>
-
-            <div class="message received">
-                <div class="avatar"></div>
-                <div class="message-content">
-                    <p class="message-title">Ejemplito</p>
-                    <p class="message-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus</p>
-                    <span class="time">11:11 pm</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-input">
-            <i class="clip">📎</i>
-            <input type="text" placeholder="Escribe un mensaje">
-            <button class="send-btn">✈️</button>
+<div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="cerrar-modal" onclick="closeDeleteModal()">&times;</span>
+        <h2>Eliminar Amigo</h2>
+        <p>¿Estás seguro de que deseas eliminar a este amigo?</p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancelar</button>
+            <button class="modal-btn delete" onclick="confirmDeleteFriend()">Eliminar</button>
         </div>
     </div>
 </div>
-</main>
 
+</main>
 
     <footer>
         <p>&copy; 2025 Kingniela. Todos los derechos reservados.</p>
@@ -136,6 +128,6 @@
     <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
     <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
     
-    <script src="./js/Social.js"></script>
+    <script src="Social.js"></script>
 </body>
 </html>
