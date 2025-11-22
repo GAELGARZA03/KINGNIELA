@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="Sesion.css"> 
-    <link rel="stylesheet" href="Tarea.css"> </head>
+    <link rel="stylesheet" href="Tarea.css"> 
+</head>
 <body>
     <header>
         <div class="logo">
@@ -46,23 +47,21 @@
             </div>
 
             <div id="Proximamente" class="tabcontent">
-                <h3>Tareas Próximas</h3>
-                <p>Aquí aparecerán las tareas que tienes pendientes por hacer.</p>
+                <div id="lista-proximas" class="task-list"></div>
             </div>
 
             <div id="Vencidas" class="tabcontent">
-                <h3>Tareas Vencidas</h3>
-                <p>Estas son las tareas que no completaste a tiempo. ¡No te preocupes, siempre hay nuevas oportunidades!</p>
+                <div id="lista-vencidas" class="task-list"></div>
             </div>
 
             <div id="Completadas" class="tabcontent">
-                <h3>Tareas Completadas</h3>
-                <p>¡Felicidades! Aquí puedes ver todas las tareas que has completado.</p>
+                <div id="lista-completadas" class="task-list"></div>
             </div>
+            
             <input type="button" value="Crear tarea" id="abrirRecuadroBtn">
         </div>
 
-        <div  id="miRecuadro" class="modal oculto">
+        <div id="miRecuadro" class="modal oculto">
             <div class="create-task">
                 <span id="cerrarRecuadroBtn" class="cerrar">&times;</span>
                 <h2>Nueva Tarea</h2>
@@ -90,5 +89,4 @@
 <footer>
     <p>&copy; 2025 Kingniela. Todos los derechos reservados.</p>
 </footer>
-
 </html>

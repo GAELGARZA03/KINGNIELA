@@ -203,3 +203,92 @@ footer {
     padding: 20px 0;
     width: 100%;
 }
+
+/* --- ESTILOS GENERALES (Mantener los existentes de tu archivo original) --- */
+/* ... (Tus estilos previos de body, main, fondos, modal, etc. se mantienen igual) ... */
+
+/* --- ESTILOS DE LAS TARJETAS DE TAREA --- */
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.task-card {
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+    border-left: 5px solid #ffdd00; /* Borde amarillo indicativo */
+    border-radius: 15px;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s ease, background-color 0.3s;
+}
+
+.task-card:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+/* Estilos específicos por estado */
+.task-card.vencida {
+    border-left-color: #ff4d4d; /* Rojo para vencidas */
+}
+
+.task-card.completada {
+    border-left-color: #4a5aff; /* Azul para completadas */
+    opacity: 0.7;
+}
+
+.task-info {
+    text-align: left;
+    color: white;
+}
+
+.task-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.task-info p {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.task-info .date {
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 5px;
+    color: #ffdd00;
+}
+
+/* Botón de check */
+.btn-check {
+    background: transparent;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    font-size: 20px;
+    color: white;
+}
+
+.btn-check:hover {
+    background-color: #4a5aff;
+    border-color: #4a5aff;
+}
+
+/* Ocultar botón check en tareas completadas si prefieres */
+.task-card.completada .btn-check {
+    background-color: #4a5aff;
+    border-color: #4a5aff;
+    cursor: default;
+}
