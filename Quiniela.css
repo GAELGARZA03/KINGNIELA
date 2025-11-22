@@ -462,3 +462,398 @@ main {
     border-radius: 0 !important;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); 
 }
+
+/* ... (MANTENER TODO EL CSS BASE DE SESION.CSS Y EL QUINIELA.CSS ANTERIOR) ... */
+/* (Asegúrate de que Social.css esté vinculado en el HTML para las coronas y el chat básico) */
+
+
+/* ==========================================================================
+   ESTILOS NUEVOS - VISTA DE GRUPO Y MODOS DE JUEGO
+   ==========================================================================
+*/
+
+/* --- BARRA LATERAL DINÁMICA --- */
+.quiniela-sidebar-item {
+    background-color: rgb(200, 215, 85); /* Color por defecto */
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    border-radius: 10px;
+    line-height: 50px;
+    color: #001f5c;
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.3s;
+    border: 2px solid transparent;
+}
+
+.quiniela-sidebar-item:hover {
+    transform: scale(1.05);
+    background-color: #e9c800;
+}
+
+.quiniela-sidebar-item.active-group {
+    border-color: white;
+    background-color: #ffdd00;
+}
+
+
+/* --- ENCABEZADO DE GRUPO --- */
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.group-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-align: left;
+}
+
+#group-header-img {
+    width: 60px; height: 60px;
+    border: 2px solid #ffdd00;
+}
+
+.group-info h2 { margin: 0; font-size: 24px; }
+.group-code-container { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #ccc; }
+.btn-copy-small { background: transparent; border: none; cursor: pointer; font-size: 16px; }
+.btn-config { background: transparent; border: none; font-size: 24px; cursor: pointer; transition: transform 0.3s; }
+.btn-config:hover { transform: rotate(90deg); }
+
+
+/* --- PESTAÑAS (TABS) --- */
+.group-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 20px;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background-color: #ffdd00;
+    color: #001f5c;
+}
+
+.tab-content {
+    text-align: left;
+    animation: fadeIn 0.3s;
+}
+
+
+/* ==========================================================================
+   ESTILOS PESTAÑA: KINGNIELAR (EL NÚCLEO DEL JUEGO)
+   ==========================================================================
+*/
+
+/* SELECTOR DE JORNADA */
+.jornada-selector-container {
+    background-color: #ffdd00;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.jornada-select {
+    background: transparent;
+    border: none;
+    color: #001f5c;
+    font-weight: bold;
+    font-size: 18px;
+    outline: none;
+    cursor: pointer;
+}
+
+
+/* --- BASE DE TARJETA DE PARTIDO (Para modos Fácil, Medio, Difícil) --- */
+.match-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #ccc;
+}
+
+.match-points { color: #ffdd00; font-weight: bold; }
+
+.match-teams-area {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.team-info { text-align: center; }
+.team-logo { width: 60px; height: 60px; object-fit: contain; margin-bottom: 5px; }
+.team-abbr { font-weight: bold; font-size: 14px; }
+
+.match-center-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ESTILOS MODO FÁCIL (Botones selección) */
+.prediction-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+.btn-predict {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: transparent;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-predict:hover { background: rgba(255,255,255,0.1); }
+.btn-predict.selected {
+    background-color: #ffdd00;
+    color: #001f5c;
+    border-color: #ffdd00;
+}
+.btn-draw { border-radius: 10px; width: auto; padding: 0 15px; }
+
+
+/* ESTILOS MODO MEDIO/DIFÍCIL (Inputs marcador) */
+.score-inputs-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px; font-weight: bold;
+}
+.score-input {
+    width: 40px; height: 40px;
+    text-align: center;
+    border-radius: 5px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: transparent;
+    color: #ffdd00;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* ESTILOS MODO DIFÍCIL (Goleadores) */
+.scorers-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.scorer-select-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+.scorer-select {
+    flex: 1;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 5px;
+    color: white;
+}
+
+
+/* --- ESTILOS MODO CLÁSICO (FANTASY) --- */
+.fantasy-container {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Campo más grande que la lista */
+    gap: 20px;
+    height: 500px;
+}
+
+/* Área del campo */
+.fantasy-field-area {
+    position: relative;
+    background-image: url('Imagenes/image_b0963d.jpg'); /* TU IMAGEN DEL CAMPO */
+    background-size: cover;
+    background-position: center;
+    border-radius: 15px;
+    border: 2px solid #ffdd00;
+    overflow: hidden;
+}
+
+/* Slots de jugadores en el campo */
+.player-slot {
+    position: absolute;
+    width: 50px; height: 50px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translate(-50%, -50%); /* Centrar el punto exacto */
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.3s;
+}
+.player-slot:hover, .player-slot.active-slot {
+    border-color: #ffdd00;
+    background: rgba(255, 221, 0, 0.2);
+}
+.player-slot img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+.player-slot.filled img { display: block; }
+.player-slot.filled span { display: none; }
+.slot-label { font-size: 10px; margin-top: 55px; text-shadow: 1px 1px 2px black; position: absolute; white-space: nowrap;}
+
+/* POSICIONES EN EL CAMPO (Porcentajes aproximados para un 4-3-3) */
+/* Portero */
+.slot-gk { top: 85%; left: 50%; }
+/* Defensas */
+.slot-def-l { top: 65%; left: 20%; }
+.slot-def-cl { top: 70%; left: 40%; }
+.slot-def-cr { top: 70%; left: 60%; }
+.slot-def-r { top: 65%; left: 80%; }
+/* Medios */
+.slot-mid-l { top: 45%; left: 30%; }
+.slot-mid-c { top: 50%; left: 50%; }
+.slot-mid-r { top: 45%; left: 70%; }
+/* Delanteros */
+.slot-fwd-l { top: 25%; left: 25%; }
+.slot-fwd-c { top: 20%; left: 50%; }
+.slot-fwd-r { top: 25%; left: 75%; }
+
+
+/* Área de lista de jugadores fantasy */
+.fantasy-selection-area {
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex; flex-direction: column;
+}
+.fantasy-selection-area h4 { margin: 0 0 10px 0; }
+.fantasy-players-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 8px;
+    /* Scrollbar estilo coronas */
+    scrollbar-width: thin; scrollbar-color: #001f5c #001f5c;
+}
+.fantasy-players-list:hover { scrollbar-color: #ffdd00 #001f5c; }
+
+.fantasy-player-card {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.05);
+    padding: 8px; border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.fantasy-player-card:hover { background: rgba(255,255,255,0.1); }
+.fantasy-player-card img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover;}
+.player-data p { margin: 0; font-size: 14px; font-weight: bold; }
+.player-data span { font-size: 12px; color: #ccc; }
+.player-cost { margin-left: auto; font-weight: bold; color: #ffdd00; }
+
+
+/* ==========================================================================
+   ESTILOS PESTAÑA: CLASIFICACIÓN
+   ==========================================================================
+*/
+.leaderboard-stats {
+    text-align: center; margin-bottom: 20px; font-size: 18px;
+}
+.table-container {
+    background: rgba(0,0,0,0.2);
+    border-radius: 15px;
+    padding: 10px;
+    margin-bottom: 25px;
+    overflow-x: auto;
+}
+.leaderboard-table {
+    width: 100%; border-collapse: collapse; text-align: center;
+}
+.leaderboard-table th {
+    padding: 10px; color: #ffdd00; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.leaderboard-table td {
+    padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+/* Resaltar fila del usuario */
+.user-rank-table .leaderboard-table tr {
+    background: rgba(255, 221, 0, 0.1); border-left: 4px solid #ffdd00;
+}
+/* Celda de usuario con alineación para la corona */
+.user-cell {
+    display: flex; align-items: center; justify-content: flex-start; gap: 8px; text-align: left;
+}
+.user-cell .profile-pic { width: 30px; height: 30px; }
+
+
+/* ==========================================================================
+   ESTILOS PESTAÑA: CHAT GRUPAL (Adaptación)
+   ==========================================================================
+*/
+/* Los estilos base ya vienen de Social.css. Aquí solo ajustes específicos si hacen falta */
+#tab-chat .message.received .name-container {
+    font-size: 12px; color: #ffdd00; margin-bottom: 4px;
+}
+#tab-chat .message.received .profile-pic {
+    width: 25px; height: 25px; margin-right: 8px;
+}
+/* El mensaje propio no lleva avatar ni nombre */
+#tab-chat .message.sent .message-content {
+    border-bottom-right-radius: 2px;
+}
+
+
+/* ==========================================================================
+   ESTILOS PESTAÑA: CONFIGURACIÓN
+   ==========================================================================
+*/
+.config-form {
+    padding: 10px;
+}
+.config-photo-section {
+    display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 25px;
+}
+.config-photo-section .profile-pic.big { width: 100px; height: 100px; border: 3px solid #ffdd00; }
+.btn-small { padding: 5px 15px; font-size: 12px; }
+
+.members-manage-list {
+    max-height: 250px; overflow-y: auto;
+    background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; margin-bottom: 20px;
+    scrollbar-width: thin; scrollbar-color: #001f5c #001f5c;
+}
+.members-manage-list:hover { scrollbar-color: #ffdd00 #001f5c; }
+
+.member-manage-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.member-info-block { display: flex; align-items: center; gap: 10px; }
+.btn-remove-member {
+    background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d;
+    padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 12px;
+}
+.btn-remove-member:hover { background: rgba(255,77,77,0.1); }

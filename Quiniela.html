@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="Sesion.css"> 
     <link rel="stylesheet" href="Quiniela.css">
+    <link rel="stylesheet" href="Social.css"> 
 </head>
 <body>
     <header>
@@ -42,120 +43,191 @@
         <div class="quiniela">
             <div class="quiniela__aside">
                 <aside>
-                    <ul>
-                        <li id="crear__quiniela">+</li>
-                        <li>H</li>
-                    </ul>
+                    <ul id="sidebar-quinielas-list">
+                        </ul>
                 </aside>
             </div>
 
-            <div class="quiniela__content">
+            <div class="quiniela__content" id="main-content-area">
                 
-                <div id="quiniela-list-view">
-                    <h2>MIS QUINIELAS</h2>
-                    <p>Aún no formas parte de ninguna quiniela.</p>
-                    
-                    <button type="button" class="btn-primary" id="btn-show-create">Crear nueva quiniela</button>
+                <div id="main-menu-view">
+                    <div id="quiniela-list-view">
+                        <h2>MIS QUINIELAS</h2>
+                        <p>Selecciona una quiniela del menú lateral o crea una nueva.</p>
+                        <button type="button" class="btn-primary" id="btn-show-create">Crear nueva quiniela</button>
+                        <hr class="separator">
+                        <div class="join-section">
+                            <label>Únete con un código</label> <br><br>
+                            <input type="text" placeholder="Ingresa el código">
+                            <br><br>
+                            <button type="button" class="btn-secondary">Unirse</button>
+                        </div>
+                    </div>
 
-                    <hr class="separator">
-
-                    <div class="join-section">
-                        <label>Únete con un código</label> <br><br>
-                        <input type="text" placeholder="Ingresa el código">
-                        <br><br>
-                        <button type="button" class="btn-secondary">Unirse</button>
+                    <div id="create-quiniela-view" class="hidden">
+                        <h2>CREAR QUINIELA</h2>
+                        <form id="form-create-quiniela" onsubmit="event.preventDefault();">
+                            <div class="form-section">
+                                <label class="section-label">Nombre de la quiniela</label>
+                                <input type="text" placeholder="Ej. Mundialitos 2026" class="input-full" required>
+                            </div>
+                            <div class="form-section">
+                                <label class="section-label">Tipo de quiniela</label>
+                                <div class="type-selector">
+                                    <input type="radio" name="tipoQuiniela" id="tipo-kingniela" value="kingniela" class="radio-hidden">
+                                    <label for="tipo-kingniela" class="type-option">
+                                        <span class="checkmark"></span>
+                                        <span>Modo Kingniela</span>
+                                    </label>
+                                    <input type="radio" name="tipoQuiniela" id="tipo-clasico" value="clasico" class="radio-hidden">
+                                    <label for="tipo-clasico" class="type-option">
+                                        <span class="checkmark"></span>
+                                        <span>Modo Clásico</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="difficulty-section" class="form-section hidden">
+                                <label class="section-label">Dificultad</label>
+                                <select class="input-full" id="select-difficulty">
+                                    <option value="facil">Fácil (Aficionado)</option>
+                                    <option value="medio">Medio (Profesional)</option>
+                                    <option value="dificil">Difícil (Leyenda)</option>
+                                </select>
+                            </div>
+                            <div class="form-section">
+                                <label class="section-label">Invitar amigos</label>
+                                <button type="button" class="btn-secondary btn-icon" id="btn-open-members">
+                                    👤 Agregar miembros
+                                </button>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-cancel" id="btn-cancel-create">Cancelar</button>
+                                <button type="button" class="btn-primary" id="btn-create-final">Crear Nueva Quiniela</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
-                <div id="create-quiniela-view" class="hidden">
-                    <h2>CREAR QUINIELA</h2>
+                <div id="quiniela-group-view" class="hidden">
                     
-                    <form id="form-create-quiniela" onsubmit="event.preventDefault();">
-                        <div class="form-section">
-                            <label class="section-label">Nombre de la quiniela</label>
-                            <input type="text" placeholder="Ej. Mundialitos 2026" class="input-full" required>
-                        </div>
-
-                        <div class="form-section">
-                            <label class="section-label">Tipo de quiniela</label>
-                            <div class="type-selector">
-                                <input type="radio" name="tipoQuiniela" id="tipo-kingniela" value="kingniela" class="radio-hidden">
-                                <label for="tipo-kingniela" class="type-option">
-                                    <span class="checkmark"></span>
-                                    <span>Modo Kingniela</span>
-                                </label>
-
-                                <input type="radio" name="tipoQuiniela" id="tipo-clasico" value="clasico" class="radio-hidden">
-                                <label for="tipo-clasico" class="type-option">
-                                    <span class="checkmark"></span>
-                                    <span>Modo Clásico</span>
-                                </label>
+                    <div class="group-header">
+                        <div class="group-info">
+                            <img src="Imagenes/mundial_2026.png" alt="Grupo" id="group-header-img" class="profile-pic">
+                            <div>
+                                <h2 id="group-header-name">Nombre Quiniela</h2>
+                                <div class="group-code-container">
+                                    <span>Código: <strong id="group-header-code">ABC123</strong></span>
+                                    <button class="btn-copy-small" id="btn-copy-group-code" title="Copiar">📋</button>
+                                </div>
                             </div>
                         </div>
+                        <button class="btn-config" id="btn-group-config" title="Configuración">⚙️</button>
+                    </div>
 
-                        <div id="difficulty-section" class="form-section hidden">
-                            <label class="section-label">Dificultad</label>
-                            <select class="input-full">
-                                <option>Aficionado</option>
-                                <option>Profesional</option>
-                                <option>Leyenda</option>
-                            </select>
+                    <div class="group-tabs">
+                        <button class="tab-btn active" data-tab="tab-kingnielar">Kingnielar</button>
+                        <button class="tab-btn" data-tab="tab-clasificacion">Clasificación</button>
+                        <button class="tab-btn" data-tab="tab-chat">Chat</button>
+                    </div>
+
+                    <div id="tab-kingnielar" class="tab-content">
+                        <div class="jornada-selector-container">
+                            <select id="jornada-select" class="jornada-select">
+                                </select>
+                        </div>
+                        <div id="kingnielar-content-area">
+                            </div>
+                        <button class="btn-primary" style="margin-top:20px;">Guardar Predicciones</button>
+                    </div>
+
+                    <div id="tab-clasificacion" class="tab-content hidden">
+                        <div class="leaderboard-stats">
+                            <p>Participantes totales: <strong id="total-participants">0</strong></p>
+                        </div>
+                        
+                        <h3>Tu Clasificación</h3>
+                        <div class="table-container user-rank-table">
+                            <table class="leaderboard-table">
+                                <thead><tr><th>Pos</th><th>Usuario</th><th>Pts</th><th>Jornada</th></tr></thead>
+                                <tbody id="user-rank-body"></tbody>
+                            </table>
                         </div>
 
-                        <div class="form-section">
-                            <label class="section-label">Invitar amigos</label>
-                            <button type="button" class="btn-secondary btn-icon" id="btn-open-members">
-                                👤 Agregar miembros
-                            </button>
+                        <h3>Tabla General</h3>
+                        <div class="table-container general-table">
+                            <table class="leaderboard-table">
+                                <thead><tr><th>Pos</th><th>Usuario</th><th>Pts</th><th>Jornada</th></tr></thead>
+                                <tbody id="general-rank-body"></tbody>
+                            </table>
                         </div>
+                    </div>
 
-                        <div class="form-actions">
-                            <button type="button" class="btn-cancel" id="btn-cancel-create">Cancelar</button>
-                            <button type="button" class="btn-primary" id="btn-create-final">Crear Nueva Quiniela</button>
+                    <div id="tab-chat" class="tab-content hidden" style="height: 400px; display: flex; flex-direction: column;">
+                         <div class="chat-body" id="group-chat-messages" style="flex:1; background: rgba(0,0,0,0.2); border-radius: 15px; margin-bottom: 10px;">
+                             </div>
+                         <div class="chat-input-area" style="background: transparent; padding: 0;">
+                            <div class="chat-input-wrapper">
+                                <input type="text" placeholder="Escribe un mensaje al grupo..." id="group-message-input">
+                                <button class="send-btn" onclick="sendGroupMessage()">➤</button>
+                            </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
 
-            </div>
+                    <div id="tab-configuracion" class="tab-content hidden">
+                        <div class="config-form">
+                            <div class="config-photo-section">
+                                <img src="Imagenes/mundial_2026.png" alt="Grupo" class="profile-pic big" id="config-group-img">
+                                <button class="btn-secondary btn-small">Cambiar Foto</button>
+                            </div>
+                            
+                            <div class="form-section">
+                                <label class="section-label">Nombre de la Quiniela</label>
+                                <input type="text" id="config-group-name" class="input-full">
+                            </div>
+                             <div class="form-section">
+                                <label class="section-label">Descripción</label>
+                                <textarea id="config-group-desc" class="input-full" rows="3"></textarea>
+                            </div>
+
+                            <h3>Miembros</h3>
+                            <div class="members-manage-list" id="config-members-list">
+                                </div>
+
+                            <div class="form-actions">
+                                <button class="btn-cancel">Deshacer</button>
+                                <button class="btn-primary">Guardar Cambios</button>
+                            </div>
+                             <div style="margin-top: 30px; border-top: 1px solid rgba(255,77,77,0.3); padding-top: 20px;">
+                                <button class="btn-cancel" style="border-color: #ff4d4d; color: #ff4d4d;">Salir de la Quiniela</button>
+                                <button class="btn-primary" style="background-color: #ff4d4d; color: white; float: right;">Eliminar Quiniela</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> </div>
         </div>
-    
     </main>
 
     <div id="membersModal" class="modal hidden">
         <div class="modal-content members-content">
             <span class="cerrar-modal" id="close-members">&times;</span>
             <h3>Agregar Miembros</h3>
-            <div class="search-bar-modal">
-                <input type="text" placeholder="Buscar amigo...">
-            </div>
-            
-            <div class="members-list" id="members-list-container">
-                </div>
-
+            <div class="search-bar-modal"><input type="text" placeholder="Buscar amigo..."></div>
+            <div class="members-list" id="members-list-container"></div>
             <button class="btn-primary btn-full" id="btn-confirm-members">Agregar</button>
         </div>
     </div>
-
     <div id="successModal" class="modal hidden">
         <div class="modal-content success-content">
             <h3>¡Quiniela Creada!</h3>
             <p>Comparte este código con tus amigos:</p>
-            
-            <div class="code-display">
-                <h1 id="generated-code">------</h1>
-                <button class="btn-copy" id="btn-copy-code" title="Copiar código">📋</button>
-            </div>
-            
+            <div class="code-display"><h1 id="generated-code">------</h1><button class="btn-copy" id="btn-copy-code">📋</button></div>
             <button class="btn-primary btn-full" id="btn-finish">Listo</button>
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2025 Kingniela. Todos los derechos reservados.</p>
-    </footer>
-    
-    <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
-    <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
+    <footer><p>&copy; 2025 Kingniela. Todos los derechos reservados.</p></footer>
+    <img class="Corona_fondo" src="Imagenes/Corona_.png" alt=""><img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
 
     <script src="Quiniela.js"></script>
 </body>
