@@ -18,7 +18,7 @@ main {
     flex-grow: 1;
 }
 
-/* --- IMÁGENES DE FONDO (Posición exacta de Perfil.css) --- */
+/* --- IMÁGENES DE FONDO --- */
 .Corona_fondo {
     scale: 100%;
     position: fixed;
@@ -27,7 +27,6 @@ main {
     left: 35vw;
     z-index: -1; 
     transform: rotate(-35deg);
-
 }
 
 .tacha_fondo {
@@ -38,10 +37,9 @@ main {
     right: 42vw;
     z-index: -1; 
     transform: rotate(-15deg);
-
 }
 
-
+/* --- LAYOUT GRID --- */
 .quiniela {
     height: 85vh;
     width: 110vh;
@@ -76,29 +74,24 @@ main {
     border-radius: 3vh;
 }
 
+/* --- LISTA LATERAL (SCROLLBAR) --- */
 .quiniela__aside ul {
     padding: 10px;
     margin: 0; 
     list-style-type: none;
-
-   
     flex: 1;                
     overflow-y: auto;      
     overflow-x: hidden;
     box-sizing: border-box; 
+    
+    scrollbar-width: thin;
+    scrollbar-color: #001f5c #001f5c; 
+    transition: scrollbar-color 0.3s ease-out;
 }
-
-.quiniela__aside ul {
-  scrollbar-width: thin;
-  scrollbar-color: #001f5c #001f5c; 
-  transition: scrollbar-color 0.3s ease-out;
-}
-
 
 .quiniela__aside ul:hover {
   scrollbar-color: #ffdd00 #001f5c; 
 }
-
 
 .quiniela__aside ul::-webkit-scrollbar {
   width: 6px;
@@ -119,11 +112,9 @@ main {
   background-color: #ffdd00; 
 }
 
-
 .quiniela__aside ul:hover::-webkit-scrollbar-thumb:hover {
   background-color: #ffee58; 
 }
-
 
 #crear__quiniela{
     background-color: white;
@@ -153,6 +144,7 @@ main {
     margin-bottom: 10px;
 }
 
+/* --- CONTENIDO GENERAL --- */
 .quiniela__content{
     text-align: center;
 }
@@ -162,20 +154,23 @@ main {
     margin-bottom: 30px;
 }
 
+/* Botones genéricos de la vista lista */
 .btn-primary{
+    /* Estilo base amarillo estandarizado */
+    background-color: #ffdd00;
+    color: #111;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-family: 'Montserrat', sans-serif;
     margin-top: 10px;
     margin-bottom: 10px;
-    background-color: #ffdd00; 
-    color: #111;
-    padding: 10px;
-}
-
-.btn-primary {
-    background-color: #ffdd00;
-    color: #122261;
 }
 .btn-primary:hover {
-    background-color: #e9c800;
+    background-color: #e6c700;
 }
 
 .btn-secondary {
@@ -197,7 +192,6 @@ main {
 
 .quiniela__content button{
     padding: 15px;
-    border: 1px solid black;
     border-radius: 10px;
     font-size: 14px;
 }
@@ -206,16 +200,14 @@ main {
     padding: 10px;
     border-radius: 10px;
     text-align: center;
-
 }
 
-/* --- REUTILIZAMOS ESTILOS BASE --- */
-
+/* --- CLASES UTILITARIAS --- */
 .hidden {
     display: none !important;
 }
 
-/* Formulario Crear Quiniela */
+/* --- FORMULARIO CREAR QUINIELA --- */
 #create-quiniela-view {
     text-align: left;
     padding: 0 40px;
@@ -240,7 +232,7 @@ main {
     padding: 12px;
     border-radius: 10px;
     border: none;
-    text-align: left !important; /* Sobrescribimos el center general */
+    text-align: left !important; 
 }
 
 /* --- SELECTOR DE TIPO (RADIOS PERSONALIZADOS) --- */
@@ -299,7 +291,7 @@ main {
     left: 3px;
 }
 
-/* --- BOTONES --- */
+/* --- BOTONES DEL FORMULARIO (ESTILOS UNIFICADOS) --- */
 .form-actions {
     display: flex;
     justify-content: space-between;
@@ -307,23 +299,39 @@ main {
     gap: 20px;
 }
 
+/* Botón Cancelar Sutil */
 .btn-cancel {
     background: transparent;
-    border: 2px solid #ff4d4d;
-    color: #ff4d4d;
-    padding: 10px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: white;
+    padding: 12px 25px;
     border-radius: 50px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: normal;
+    transition: all 0.3s ease;
 }
-.btn-cancel:hover { background: rgba(255, 77, 77, 0.1); }
+.btn-cancel:hover { 
+    background: rgba(255, 255, 255, 0.1); 
+    border-color: white;
+}
 
+/* Botón de Icono (Agregar miembros) */
 .btn-icon {
     display: flex;
     align-items: center;
     gap: 10px;
     width: auto;
+    background-color: #ffdd00;
+    color: #111;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
 }
+.btn-icon:hover { background-color: #e6c700; }
+
+.btn-full { width: 100%; }
 
 /* --- MODALES --- */
 .modal {
@@ -355,7 +363,7 @@ main {
     cursor: pointer;
 }
 
-/* Modal Miembros */
+/* --- LISTA DE MIEMBROS EN EL MODAL --- */
 .members-list {
     max-height: 200px;
     overflow-y: auto;
@@ -383,9 +391,17 @@ main {
     width: 100%;
 }
 
-.member-item img {
+/* SOLUCIÓN AL TAMAÑO: Solo afectamos al avatar */
+.member-item .profile-pic {
     width: 30px; height: 30px;
     border-radius: 50%;
+    object-fit: cover;
+}
+
+/* SOLUCIÓN AL TAMAÑO: Forzamos la corona pequeña */
+.member-item .crown-badge {
+    height: 10px !important;
+    width: auto !important;
 }
 
 .search-bar-modal input {
@@ -396,7 +412,7 @@ main {
     margin-bottom: 10px;
 }
 
-/* Modal Éxito */
+/* --- MODAL ÉXITO (CÓDIGO) --- */
 .code-display {
     background: #1a24ad;
     padding: 15px;
@@ -425,4 +441,24 @@ main {
 }
 .btn-copy:active { transform: scale(0.9); }
 
-.btn-full { width: 100%; }
+
+/* ==========================================================================
+   ESTILOS DE LA INSIGNIA (CORONA) Y ALINEACIÓN
+   ==========================================================================
+*/
+
+.name-container {
+    display: flex;
+    align-items: center;
+    gap: 6px; 
+}
+
+.crown-badge {
+    height: 12px;          
+    width: auto !important; 
+    vertical-align: middle; 
+    display: inline-block;
+    background: transparent !important; 
+    border-radius: 0 !important;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); 
+}
