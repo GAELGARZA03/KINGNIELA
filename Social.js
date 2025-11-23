@@ -1,229 +1,397 @@
-// --- DATOS ESTÁTICOS (MOCK DATA) ---
-const amigosData = [
-    { 
-        id: 1, 
-        nombre: "Juan Pérez", 
-        status: "online", 
-        avatar: "Imagenes/I_Perfil.png",
-        corona: "Imagenes/CoronaDiamante1.png"
-    },
-    { 
-        id: 2, 
-        nombre: "Carlos López", 
-        status: "offline", 
-        avatar: "Imagenes/I_Perfil.png",
-        corona: null 
-    },
-    { 
-        id: 3, 
-        nombre: "Ana Torres", 
-        status: "online", 
-        avatar: "Imagenes/I_Perfil.png",
-        corona: "Imagenes/CoronaOro1.png"
-    },
-    { 
-        id: 4, 
-        nombre: "Luis Gomez", 
-        status: "offline", 
-        avatar: "Imagenes/I_Perfil.png",
-        corona: "Imagenes/CoronaPlata1.png"
-    },
-    { 
-        id: 5, 
-        nombre: "Maria Ruiz", 
-        status: "online", 
-        avatar: "Imagenes/I_Perfil.png",
-        corona: "Imagenes/CoronaBronce1.png"
-    }
-];
-
-let currentFilter = 'all';
-let friendToDeleteId = null; 
-
 document.addEventListener('DOMContentLoaded', () => {
-    renderFriends(currentFilter);
-    renderChatList();
-});
-
-// --- RENDERIZADO ---
-
-function renderFriends(filter) {
-    const grid = document.getElementById('friends-grid');
-    grid.innerHTML = "";
-
-    const filteredFriends = amigosData.filter(friend => {
-        if (filter === 'online') return friend.status === 'online';
-        return true; 
-    });
-
-    filteredFriends.forEach(friend => {
-        const friendCard = document.createElement('div');
-        friendCard.className = 'friend';
-        
-        const statusColor = friend.status === 'online' ? '#00ff26' : 'gray';
-        
-        const crownBadge = friend.corona 
-            ? `<img src="${friend.corona}" class="crown-badge" alt="Insignia">` 
-            : '';
-
-        friendCard.innerHTML = `
-            <div class="friend-info">
-                <img src="${friend.avatar}" alt="Avatar" class="profile-pic">
-                <div>
-                    <div class="name-container">
-                        <strong>${friend.nombre}</strong>
-                        ${crownBadge}
-                    </div>
-                    
-                    <span style="font-size: 12px; color: #ccc; display: flex; align-items: center; margin-top: 2px;">
-                        <span style="display:inline-block; width:8px; height:8px; background:${statusColor}; border-radius:50%; margin-right:5px;"></span>
-                        ${friend.status === 'online' ? 'En línea' : 'Desconectado'}
-                    </span>
-                </div>
-            </div>
-            <div class="friend-actions">
-                <button title="Enviar mensaje" onclick="openChat(${friend.id})">💬</button>
-                <button class="delete-friend" title="Eliminar amigo" onclick="openDeleteModal(${friend.id})">⋯</button>
-            </div>
-        `;
-        grid.appendChild(friendCard);
-    });
-
-    if(filteredFriends.length === 0) {
-        grid.innerHTML = "<p style='text-align:center; padding:20px;'>No se encontraron amigos.</p>";
+    
+    const currentUser = JSON.parse(localStorage.getItem('kingniela_user'));
+    if (!currentUser) {
+        window.location.href = 'IniciarSesion.html';
+        return;
     }
-}
 
-function renderChatList() {
-    const container = document.getElementById('chat-list-container');
-    container.innerHTML = "";
+    // CONEXIÓN SOCKET.IO
+    const socket = io('http://localhost:3000'); 
 
-    amigosData.forEach(friend => {
-        const item = document.createElement('div');
-        item.className = 'user';
-        item.onclick = () => openChat(friend.id);
+    // Referencias DOM
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const fileInput = document.getElementById('fileInput');
+    
+    // Elementos Video
+    const callingModal = document.getElementById('callingModal');
+    const incomingCallModal = document.getElementById('incomingCallModal');
+    const videoCallContainer = document.getElementById('videoCallContainer');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
 
-        const crownBadge = friend.corona 
-            ? `<img src="${friend.corona}" class="crown-badge" alt="Insignia">` 
-            : '';
+    // Variables de Estado
+    let currentChatFriendId = null;
+    let globalFriendsList = [];
+    let onlineUsersSet = new Set();
+    
+    // WebRTC
+    let localStream = null;
+    let remoteStream = null;
+    let peerConnection = null;
+    let currentCallPartner = null;
+    const iceServers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-        item.innerHTML = `
-            <img src="${friend.avatar}" alt="Avatar" class="profile-pic">
-            <div class="name-container">
-                <span>${friend.nombre}</span>
-                ${crownBadge}
-            </div>
-        `;
-        container.appendChild(item);
+    // ============================================================
+    // 1. SOCKETS: CONEXIÓN Y CHAT
+    // ============================================================
+
+    socket.on('connect', () => {
+        console.log('Conectado a Socket.io');
+        socket.emit('register', currentUser.id);
+        
+        // Pedir usuarios online iniciales
+        fetch('http://localhost:3000/online-users')
+            .then(r => r.json())
+            .then(ids => {
+                ids.forEach(id => onlineUsersSet.add(id));
+                renderFriends('all');
+            });
     });
-}
 
-// ... (Resto de funciones: filterFriends, searchFriends se mantienen igual) ...
+    socket.on('user_status', (data) => {
+        if(data.status === 'online') onlineUsersSet.add(parseInt(data.userId));
+        else onlineUsersSet.delete(parseInt(data.userId));
+        renderFriends('all'); // Actualizar UI
+    });
 
-// --- LÓGICA DE CHAT ---
-
-function openChat(userId) {
-    const user = amigosData.find(u => u.id === userId);
-    if(!user) return;
-
-    const crownBadge = user.corona 
-        ? `<img src="${user.corona}" class="crown-badge" alt="Insignia">` 
-        : '';
-
-    // AÑADIDA CLASE profile-pic AL AVATAR DEL CHAT
-    document.getElementById('chat-current-avatar').innerHTML = `<img src="${user.avatar}" class="profile-pic" style="width:100%; height:100%; border-radius:50%;">`;
-    
-    document.getElementById('chat-current-name').innerHTML = `
-        <div class="name-container">
-            ${user.nombre} ${crownBadge}
-        </div>
-    `;
-
-    document.getElementById('chat-current-status').innerText = user.status === 'online' ? 'En línea' : 'Desconectado';
-    document.getElementById('chat-current-status').style.color = user.status === 'online' ? '#00ff26' : 'gray';
-    
-    // ... (Resto de la función openChat y mensajes simulados se mantiene igual) ...
-    const chatBody = document.getElementById('chat-messages');
-    chatBody.innerHTML = `
-        <div class="message received">
-            <div class="message-content" style="background:#1a2cbd; border-radius:10px; padding:10px;">
-                <p style="margin:0;">Hola ${user.nombre}, ¿cómo estás?</p>
-                <span style="font-size:10px; opacity:0.7;">10:00 AM</span>
-            </div>
-        </div>
-        <div class="message sent" style="align-self: flex-end;">
-             <div class="message-content" style="background:#0f1b73; border-radius:10px; padding:10px;">
-                <p style="margin:0;">¡Todo listo para la quiniela!</p>
-                <span style="font-size:10px; opacity:0.7;">10:05 AM</span>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('friends-view').classList.add('hidden');
-    document.getElementById('chat-view').classList.remove('hidden');
-}
-
-// ... (Resto del archivo: closeChat, sendMessage, Modales, etc. se mantiene igual) ...
-
-function closeChat() {
-    document.getElementById('chat-view').classList.add('hidden');
-    document.getElementById('friends-view').classList.remove('hidden');
-    document.getElementById('chat-options-menu').classList.add('hidden');
-}
-
-function toggleChatOptions() {
-    const menu = document.getElementById('chat-options-menu');
-    menu.classList.toggle('hidden');
-}
-
-function sendMessage() {
-    const input = document.getElementById('message-input');
-    const text = input.value;
-    if(text.trim() === "") return;
-
-    const chatBody = document.getElementById('chat-messages');
-    const msgDiv = document.createElement('div');
-    msgDiv.className = "message sent";
-    msgDiv.style.alignSelf = "flex-end";
-    msgDiv.innerHTML = `
-        <div class="message-content" style="background:#0f1b73; border-radius:10px; padding:10px;">
-            <p style="margin:0;">${text}</p>
-            <span style="font-size:10px; opacity:0.7;">Ahora</span>
-        </div>
-    `;
-    chatBody.appendChild(msgDiv);
-    input.value = "";
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// --- MODALES: AÑADIR Y ELIMINAR ---
-
-function openAddFriendModal() {
-    document.getElementById('addFriendModal').classList.remove('hidden');
-}
-
-function closeAddFriendModal() {
-    document.getElementById('addFriendModal').classList.add('hidden');
-}
-
-function openDeleteModal(id) {
-    friendToDeleteId = id; 
-    document.getElementById('deleteModal').classList.remove('hidden');
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.add('hidden');
-    friendToDeleteId = null; 
-}
-
-function confirmDeleteFriend() {
-    if (friendToDeleteId !== null) {
-        const index = amigosData.findIndex(f => f.id === friendToDeleteId);
-        if (index !== -1) {
-            amigosData.splice(index, 1); 
-            renderFriends(currentFilter); 
-            renderChatList();
+    socket.on('newMessage', (msg) => {
+        // Si es para mí y estoy en ese chat
+        const senderId = parseInt(msg.Id_Remitente || msg.remitente_id || msg.sender_id);
+        if(currentChatFriendId && senderId === currentChatFriendId) {
+            appendMessageToChat(msg, 'received');
         }
-        closeDeleteModal(); 
+    });
+
+
+    // ============================================================
+    // 2. CHAT Y MULTIMEDIA
+    // ============================================================
+
+    window.openChat = function(friendId) {
+        const friend = globalFriendsList.find(f => parseInt(f.id) === friendId);
+        if(!friend) return;
+
+        currentChatFriendId = friendId;
+        
+        // Render Header
+        const crown = friend.corona ? `<img src="${friend.corona}" class="crown-badge">` : '';
+        document.getElementById('chat-current-name').innerHTML = `<div class="name-container">${friend.nombre} ${crown}</div>`;
+        document.getElementById('chat-current-avatar').innerHTML = `<img src="${friend.avatar}" class="profile-pic">`;
+        
+        const isOnline = onlineUsersSet.has(friendId);
+        document.getElementById('chat-current-status').innerText = isOnline ? 'En línea' : 'Desconectado';
+        document.getElementById('chat-current-status').style.color = isOnline ? '#00ff26' : 'gray';
+
+        // Mostrar vista
+        document.getElementById('friends-view').classList.add('hidden');
+        document.getElementById('chat-view').classList.remove('hidden');
+
+        loadMessages(friendId);
     }
-}
+
+    function loadMessages(friendId) {
+        chatMessages.innerHTML = "<p style='text-align:center;color:#ccc'>Cargando...</p>";
+        fetch(`php/messages.php?sender_id=${currentUser.id}&receiver_id=${friendId}`)
+            .then(r => r.json())
+            .then(msgs => {
+                chatMessages.innerHTML = "";
+                msgs.forEach(m => {
+                    const isMe = parseInt(m.Id_Remitente) == currentUser.id;
+                    appendMessageToChat(m, isMe ? 'sent' : 'received');
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+    }
+
+    function appendMessageToChat(msg, type) {
+        const div = document.createElement('div');
+        div.className = `message ${type}`;
+        if(type === 'sent') div.style.alignSelf = 'flex-end';
+        
+        let contentHtml = '';
+        const tipo = msg.Tipo || msg.tipo;
+        const contenido = msg.Contenido || msg.contenido;
+
+        switch(tipo) {
+            case 'imagen': 
+                contentHtml = `<img src="${contenido}" style="max-width:200px; border-radius:10px;">`; 
+                break;
+            case 'audio': 
+                contentHtml = `<div class="audio-message"><button class="play-btn">▶</button><div class="progress-bar"><div class="progress-fill"></div></div><span class="audio-time">Audio</span><audio src="${contenido}"></audio></div>`; 
+                break;
+            case 'ubicacion':
+                contentHtml = `<a href="https://maps.google.com/?q=${contenido}" target="_blank" style="color:#ffdd00;">📍 Ver Ubicación</a>`;
+                break;
+            case 'archivo':
+                const name = contenido.split('/').pop().substring(14); // Quitar uniqid
+                contentHtml = `<a href="${contenido}" download style="color:white;">📎 ${name}</a>`;
+                break;
+            default: 
+                contentHtml = `<p style="margin:0;">${contenido}</p>`;
+        }
+
+        div.innerHTML = `
+            <div class="message-content" style="background:${type==='sent'?'#0f1b73':'#1a2cbd'}; border-radius:10px; padding:10px;">
+                ${contentHtml}
+                <span style="font-size:10px; opacity:0.7; display:block; text-align:right;">${msg.Fecha_Envio ? new Date(msg.Fecha_Envio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Ahora'}</span>
+            </div>
+        `;
+        chatMessages.appendChild(div);
+        
+        // Activar reproductor de audio si hay
+        if(tipo === 'audio') activateAudio(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function activateAudio(el) {
+        const btn = el.querySelector('.play-btn');
+        const audio = el.querySelector('audio');
+        const fill = el.querySelector('.progress-fill');
+        
+        btn.onclick = () => audio.paused ? audio.play() : audio.pause();
+        audio.onplay = () => btn.innerText = '⏸';
+        audio.onpause = () => btn.innerText = '▶';
+        audio.ontimeupdate = () => fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+    }
+
+    // ENVÍO DE MENSAJES
+    window.sendMessage = function() {
+        const text = messageInput.value.trim();
+        if(!text) return;
+        sendPayload({ action: 'send', content: text, tipo: 'texto' });
+        messageInput.value = "";
+    }
+
+    // Botones Multimedia
+    document.getElementById('attachFileBtn').onclick = () => fileInput.click();
+    fileInput.onchange = () => {
+        if(fileInput.files[0]) {
+            const formData = new FormData();
+            formData.append('action', 'send_file'); // PHP debe manejar esto
+            formData.append('file', fileInput.files[0]);
+            sendPayload(formData, true);
+        }
+    };
+
+    document.getElementById('shareLocationBtn').onclick = () => {
+        if(!navigator.geolocation) return alert("No soportado");
+        navigator.geolocation.getCurrentPosition(pos => {
+            sendPayload({ action: 'send', content: `${pos.coords.latitude},${pos.coords.longitude}`, tipo: 'ubicacion' });
+        });
+    };
+
+    // Grabación de Audio (Simplificada)
+    let mediaRecorder, audioChunks = [];
+    document.getElementById('recordAudioBtn').onclick = async () => {
+        if(mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            document.getElementById('recordAudioBtn').style.color = '#ccc';
+        } else {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                const file = new File([blob], "voice_note.webm", { type: "audio/webm" });
+                const fd = new FormData();
+                fd.append('action', 'send_file');
+                fd.append('file', file);
+                sendPayload(fd, true);
+            };
+            mediaRecorder.start();
+            document.getElementById('recordAudioBtn').style.color = 'red';
+        }
+    };
+
+    function sendPayload(data, isFile = false) {
+        if(!currentChatFriendId) return;
+        
+        let body;
+        if(isFile) {
+            body = data; // FormData
+            body.append('sender_id', currentUser.id);
+            body.append('receiver_id', currentChatFriendId);
+        } else {
+            body = new FormData();
+            body.append('action', 'send');
+            body.append('sender_id', currentUser.id);
+            body.append('receiver_id', currentChatFriendId);
+            body.append('content', data.content);
+            body.append('tipo', data.tipo);
+        }
+
+        fetch('php/messages.php', { method: 'POST', body: body })
+            .then(r => r.json())
+            .then(res => {
+                if(res.success) {
+                    // Agregar a mi chat localmente (simulación inmediata)
+                    // El socket se encargará de que le llegue al otro
+                    if(!isFile && data.tipo === 'texto') {
+                        appendMessageToChat({ Contenido: data.content, Tipo: data.tipo, Fecha_Envio: new Date() }, 'sent');
+                    }
+                }
+            });
+    }
+
+
+    // ============================================================
+    // 3. VIDEOLLAMADAS (WEBRTC)
+    // ============================================================
+
+    // A. Iniciar Llamada (Caller)
+    document.getElementById('startVideoCallBtn').onclick = () => {
+        if(!currentChatFriendId) return;
+        const friend = globalFriendsList.find(f => parseInt(f.id) === currentChatFriendId);
+        
+        currentCallPartner = friend;
+        document.getElementById('callingFriendName').innerText = friend.nombre;
+        callingModal.classList.remove('hidden');
+        
+        socket.emit('video-call-offer', {
+            caller: { id: currentUser.id, nombre: currentUser.nombre },
+            receiver: { id: friend.id }
+        });
+    };
+
+    // B. Cancelar
+    document.getElementById('cancelCallBtn').onclick = () => {
+        callingModal.classList.add('hidden');
+        socket.emit('video-call-cancel', { receiverId: currentCallPartner.id });
+        currentCallPartner = null;
+    };
+
+    // C. Recibir Llamada
+    socket.on('video-call-offer', (data) => {
+        if(currentCallPartner) return; // Ocupado
+        const { caller } = data;
+        currentCallPartner = caller; // Guardar ID
+        
+        document.getElementById('incomingCallFriendName').innerText = `${caller.nombre} te llama...`;
+        incomingCallModal.classList.remove('hidden');
+    });
+
+    // D. Aceptar
+    document.getElementById('acceptCallBtn').onclick = () => {
+        incomingCallModal.classList.add('hidden');
+        socket.emit('video-call-accept', { callerId: currentCallPartner.id, receiver: currentUser });
+        startWebRTC(false); // Soy receiver
+    };
+
+    // E. Rechazar
+    document.getElementById('rejectCallBtn').onclick = () => {
+        incomingCallModal.classList.add('hidden');
+        socket.emit('video-call-reject', { callerId: currentCallPartner.id });
+        currentCallPartner = null;
+    };
+
+    // F. Respuestas del servidor
+    socket.on('video-call-accepted', () => {
+        callingModal.classList.add('hidden');
+        startWebRTC(true); // Soy caller
+    });
+
+    socket.on('video-call-rejected', () => {
+        callingModal.classList.add('hidden');
+        alert('Llamada rechazada');
+        currentCallPartner = null;
+    });
+
+    socket.on('call-ended', () => endCallUI());
+
+
+    // G. WebRTC Logic
+    async function startWebRTC(isCaller) {
+        videoCallContainer.classList.remove('hidden');
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream;
+
+            peerConnection = new RTCPeerConnection(iceServers);
+
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            peerConnection.ontrack = event => {
+                if(!remoteStream) {
+                    remoteStream = new MediaStream();
+                    remoteVideo.srcObject = remoteStream;
+                }
+                remoteStream.addTrack(event.track);
+            };
+
+            peerConnection.onicecandidate = event => {
+                if(event.candidate) {
+                    socket.emit('webrtc-signal', { partnerId: currentCallPartner.id, signal: { ice: event.candidate } });
+                }
+            };
+
+            if(isCaller) {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('webrtc-signal', { partnerId: currentCallPartner.id, signal: { sdp: peerConnection.localDescription } });
+            }
+
+        } catch(e) {
+            console.error(e);
+            alert('Error al acceder a cámara/micrófono');
+            endCallUI();
+        }
+    }
+
+    socket.on('webrtc-signal', async (data) => {
+        if(!peerConnection) return;
+        const { signal } = data;
+
+        if(signal.sdp) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+            if(signal.sdp.type === 'offer') {
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('webrtc-signal', { partnerId: currentCallPartner.id, signal: { sdp: peerConnection.localDescription } });
+            }
+        } else if(signal.ice) {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
+        }
+    });
+
+    // Terminar
+    document.getElementById('endCallBtn').onclick = () => {
+        socket.emit('end-call', { partnerId: currentCallPartner.id });
+        endCallUI();
+    };
+
+    function endCallUI() {
+        videoCallContainer.classList.add('hidden');
+        if(localStream) localStream.getTracks().forEach(t => t.stop());
+        if(peerConnection) peerConnection.close();
+        localStream = null;
+        peerConnection = null;
+        currentCallPartner = null;
+    }
+
+
+    // 4. CARGA INICIAL DE AMIGOS (Tu lógica existente)
+    loadFriends();
+    function loadFriends() {
+        fetch(`php/friends.php?user_id=${currentUser.id}`)
+            .then(r => r.json())
+            .then(data => {
+                globalFriendsList = data.friends || [];
+                renderFriends('all');
+                renderChatList();
+            });
+    }
+    
+    // (Mantener aquí tus funciones renderFriends, renderChatList, etc. del Social.js anterior)
+    // Solo recuerda que ahora openChat llama a la nueva versión que maneja sockets.
+    
+    // ... (Copia aquí las funciones renderFriends y renderChatList de tu Social.js previo) ...
+
+    window.closeChat = function() {
+        document.getElementById('chat-view').classList.add('hidden');
+        document.getElementById('friends-view').classList.remove('hidden');
+    }
+});

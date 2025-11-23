@@ -804,3 +804,112 @@ main {
 .chat-header .crown-badge {
     height: 14px; 
 }
+
+/* ... (MANTÉN TODO TU CSS ANTERIOR DE SOCIAL.CSS) ... */
+
+/* --- ESTILOS NUEVOS PARA EL CHAT MULTIMEDIA --- */
+
+.chat-action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-right: 5px;
+    color: #ccc;
+    transition: color 0.3s;
+}
+.chat-action-btn:hover { color: #ffdd00; }
+
+/* Reproductor de Audio */
+.audio-message {
+    display: flex; align-items: center; gap: 10px; width: 200px;
+}
+.play-btn {
+    background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;
+}
+.progress-bar {
+    flex-grow: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; position: relative;
+}
+.progress-fill {
+    height: 100%; width: 0%; background: #ffdd00; transition: width 0.1s linear;
+}
+.audio-time { font-size: 10px; color: #ccc; min-width: 30px; text-align: right; }
+
+
+/* --- ESTILOS PARA VIDEOLLAMADAS --- */
+
+/* Modales de llamada (centrados y blancos) */
+.call-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    z-index: 2000;
+    text-align: center;
+    color: #333;
+    min-width: 300px;
+}
+.call-modal h3 { margin-top: 0; color: #1a24ad; }
+
+/* Loader giratorio */
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #ffdd00;
+    border-radius: 50%;
+    width: 50px; height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Contenedor de Video (Overlay completo) */
+#videoCallContainer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: #000;
+    z-index: 3000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+}
+
+.video-wrapper {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
+}
+
+#remoteVideo {
+    width: 100%; height: 100%;
+    object-fit: cover; /* Llena la pantalla */
+}
+
+#localVideo {
+    position: absolute;
+    bottom: 30px; right: 30px;
+    width: 150px; height: 200px;
+    background: #222;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    object-fit: cover;
+    z-index: 3001;
+}
+
+.video-controls {
+    position: absolute;
+    bottom: 30px;
+    z-index: 3002;
+}
+
+#endCallBtn {
+    background-color: #ff4d4d;
+    color: white;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    border-radius: 50px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+#endCallBtn:hover { background-color: #cc0000; }

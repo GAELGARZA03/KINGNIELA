@@ -42,8 +42,7 @@
     
     <div class="sidebar">
       <h2>Chats Activos</h2>
-      <div class="direct-messages" id="chat-list-container">
-        </div>
+      <div class="direct-messages" id="chat-list-container"></div>
     </div>
 
     <div class="main">
@@ -59,8 +58,7 @@
             <input type="text" id="search-friends" placeholder="Buscar amigo..." onkeyup="searchFriends()" />
           </div>
 
-          <div class="friend-list" id="friends-grid">
-            </div>
+          <div class="friend-list" id="friends-grid"></div>
       </div>
 
       <div id="chat-view" class="hidden">
@@ -73,22 +71,21 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button id="startVideoCallBtn" class="chat-action-btn" title="Videollamada">🎥</button>
                     <span class="cerrar-chat" onclick="closeChat()">✕</span>
                 </div>
             </div>
 
-            <div class="chat-body" id="chat-messages">
-                </div>
+            <div class="chat-body" id="chat-messages"></div>
 
             <div class="chat-input-area">
-                <div class="chat-options-menu hidden" id="chat-options-menu">
-                    <button onclick="alert('Subir archivo')">📂 Archivo</button>
-                    <button onclick="alert('Enviar audio')">🎤 Audio</button>
-                    <button onclick="alert('Enviar ubicación')">📍 Ubicación</button>
-                </div>
-
                 <div class="chat-input-wrapper">
-                    <button class="btn-options" onclick="toggleChatOptions()">+</button>
+                    <input type="file" id="fileInput" style="display: none;">
+                    
+                    <button id="attachFileBtn" class="chat-action-btn" title="Adjuntar">📎</button>
+                    <button id="recordAudioBtn" class="chat-action-btn" title="Grabar Audio">🎤</button>
+                    <button id="shareLocationBtn" class="chat-action-btn" title="Ubicación">📍</button>
+                    
                     <input type="text" placeholder="Escribe un mensaje..." id="message-input">
                     <button class="send-btn" onclick="sendMessage()">➤</button>
                 </div>
@@ -119,6 +116,32 @@
     </div>
 </div>
 
+<div id="callingModal" class="call-modal hidden">
+    <h3>Llamando a</h3>
+    <p id="callingFriendName" style="font-size: 1.2em; color: #001f5c;">...</p>
+    <div class="loader"></div>
+    <button id="cancelCallBtn" class="modal-btn delete">Cancelar</button>
+</div>
+
+<div id="incomingCallModal" class="call-modal hidden">
+    <h3>📞 Llamada Entrante</h3>
+    <p id="incomingCallFriendName" style="font-size: 1.2em; color: #001f5c;">...</p>
+    <div class="modal-actions">
+        <button id="acceptCallBtn" class="btn-accept" style="width: auto; padding: 10px 20px; border-radius: 20px;">Contestar</button>
+        <button id="rejectCallBtn" class="btn-reject" style="width: auto; padding: 10px 20px; border-radius: 20px;">Colgar</button>
+    </div>
+</div>
+
+<div id="videoCallContainer" class="hidden">
+    <div class="video-wrapper">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+    <div class="video-controls">
+        <button id="endCallBtn" class="modal-btn delete">Terminar Llamada</button>
+    </div>
+</div>
+
 </main>
 
     <footer>
@@ -128,6 +151,7 @@
     <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
     <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
     
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="Social.js"></script>
 </body>
 </html>
