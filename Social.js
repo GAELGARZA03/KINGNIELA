@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 2. CONEXIÓN SOCKET.IO
-    // Ajusta la IP si vas a probar en red local (ej: 'http://192.168.1.X:3000')
-    const socket = io('http://localhost:3000'); 
+    // 2. CONEXIÓN SOCKET.IO (CORREGIDA)
+    // Usamos la conexión global si existe para evitar duplicados
+    const socket = window.socket || io('http://localhost:3000'); 
 
     // --- REFERENCIAS DOM ---
     const chatMessages = document.getElementById('chat-messages');
@@ -42,25 +42,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. SOCKET LISTENERS (CONEXIÓN Y ESTADO)
     // ============================================================
 
+    // Si el socket ya estaba conectado (por socket.js), pedimos usuarios online directamente
+    if(socket.connected) {
+        requestOnlineUsers();
+    }
+
     socket.on('connect', () => {
-        console.log('🟢 Conectado a Socket.io');
-        socket.emit('register', currentUser.id);
-        
-        // Pedir usuarios online iniciales
+        console.log('🟢 Social.js conectado al Socket');
+        // Si no usamos socket.js, necesitamos registrarnos aquí
+        if(!window.socket) {
+            socket.emit('register', currentUser.id);
+        }
+        requestOnlineUsers();
+    });
+
+    function requestOnlineUsers() {
         fetch('http://localhost:3000/online-users')
             .then(r => r.json())
             .then(ids => {
                 ids.forEach(id => onlineUsersSet.add(id));
-                renderFriends('all'); // Refrescar para ver bolitas verdes
+                renderFriends('all'); // Refrescar UI
+                renderChatList();
             })
             .catch(err => console.log("Node server no responde:", err));
-    });
+    }
 
     socket.on('user_status', (data) => {
         if(data.status === 'online') onlineUsersSet.add(parseInt(data.userId));
         else onlineUsersSet.delete(parseInt(data.userId));
         
-        renderFriends('all'); // Actualizar lista
+        renderFriends('all'); 
+        renderChatList(); // Actualizar puntitos en sidebar también
         
         // Si estoy chateando con él, actualizar header
         if(currentChatFriendId == data.userId) {
@@ -69,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('newMessage', (msg) => {
-        // Detectar ID del remitente (compatibilidad con lo que envía PHP)
         const senderId = parseInt(msg.Id_Remitente || msg.remitente_id || msg.sender_id);
         
         // Si el mensaje es para mí y tengo el chat abierto con esa persona
@@ -108,9 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!grid) return;
         grid.innerHTML = "";
         
-        // Estilos botones filtro
-        document.getElementById('btn-all').classList.toggle('active', filter === 'all');
-        document.getElementById('btn-online').classList.toggle('active', filter === 'online');
+        // Botones filtro
+        const btnAll = document.getElementById('btn-all');
+        const btnOnline = document.getElementById('btn-online');
+        if(btnAll) btnAll.classList.toggle('active', filter === 'all');
+        if(btnOnline) btnOnline.classList.toggle('active', filter === 'online');
 
         if (filter === 'all') {
             // A. Solicitudes Pendientes
@@ -203,9 +216,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const crown = friend.corona ? `<img src="${friend.corona}" class="crown-badge">` : '';
             const avatar = friend.avatar || 'Imagenes/I_Perfil.png';
+            
+            // Puntito de estado en el sidebar también
+            const isOnline = onlineUsersSet.has(parseInt(friend.id));
+            const dotColor = isOnline ? '#00ff26' : 'gray';
 
             item.innerHTML = `
-                <img src="${avatar}" class="profile-pic">
+                <div style="position:relative;">
+                    <img src="${avatar}" class="profile-pic">
+                    <div style="position:absolute; bottom:0; right:0; width:10px; height:10px; border-radius:50%; background:${dotColor}; border:1px solid #001f5c;"></div>
+                </div>
                 <div class="name-container"><span>${friend.nombre}</span>${crown}</div>
             `;
             container.appendChild(item);
@@ -332,52 +352,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Funciones de Botones Multimedia
-    document.getElementById('attachFileBtn').onclick = () => fileInput.click();
-    fileInput.onchange = () => {
-        if(fileInput.files[0]) {
-            const fd = new FormData();
-            fd.append('action', 'send_file');
-            fd.append('file', fileInput.files[0]);
-            sendPayload(fd, true);
-            fileInput.value = ""; // Reset
-        }
-    };
+    if(document.getElementById('attachFileBtn')) {
+        document.getElementById('attachFileBtn').onclick = () => fileInput.click();
+        fileInput.onchange = () => {
+            if(fileInput.files[0]) {
+                const fd = new FormData();
+                fd.append('action', 'send_file');
+                fd.append('file', fileInput.files[0]);
+                sendPayload(fd, true);
+                fileInput.value = ""; 
+            }
+        };
+    }
 
-    document.getElementById('shareLocationBtn').onclick = () => {
-        if(!navigator.geolocation) return alert("Navegador no soporta geolocalización");
-        navigator.geolocation.getCurrentPosition(pos => {
-            sendPayload({ action: 'send', content: `${pos.coords.latitude},${pos.coords.longitude}`, tipo: 'ubicacion' });
-        });
-    };
+    if(document.getElementById('shareLocationBtn')) {
+        document.getElementById('shareLocationBtn').onclick = () => {
+            if(!navigator.geolocation) return alert("Navegador no soporta geolocalización");
+            navigator.geolocation.getCurrentPosition(pos => {
+                sendPayload({ action: 'send', content: `${pos.coords.latitude},${pos.coords.longitude}`, tipo: 'ubicacion' });
+            });
+        };
+    }
 
     // Grabador Audio Simple
     let mediaRecorder;
     const btnRec = document.getElementById('recordAudioBtn');
-    btnRec.onclick = async () => {
-        if(mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-            btnRec.style.color = '#ccc';
-        } else {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                const chunks = [];
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'audio/webm' });
-                    const file = new File([blob], "audio_msg.webm", { type: "audio/webm" });
-                    const fd = new FormData();
-                    fd.append('action', 'send_file');
-                    fd.append('file', file);
-                    sendPayload(fd, true);
-                };
-                mediaRecorder.start();
-                btnRec.style.color = 'red'; // Indicador visual grabando
-            } catch(e) {
-                alert("Permiso de micrófono denegado");
+    if(btnRec) {
+        btnRec.onclick = async () => {
+            if(mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btnRec.style.color = '#ccc';
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'audio/webm' });
+                        const file = new File([blob], "audio_msg.webm", { type: "audio/webm" });
+                        const fd = new FormData();
+                        fd.append('action', 'send_file');
+                        fd.append('file', file);
+                        sendPayload(fd, true);
+                    };
+                    mediaRecorder.start();
+                    btnRec.style.color = 'red'; 
+                } catch(e) {
+                    alert("Permiso de micrófono denegado");
+                }
             }
-        }
-    };
+        };
+    }
 
     function sendPayload(data, isFile = false) {
         if(!currentChatFriendId) return;
@@ -400,11 +426,9 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(r => r.json())
             .then(res => {
                 if(res.success) {
-                    // Si es texto, lo pinto de una vez (feedback inmediato)
                     if(!isFile && data.tipo === 'texto') {
                         appendMessageToChat({ Contenido: data.content, Tipo: data.tipo, Fecha_Envio: new Date() }, 'sent');
                     }
-                    // Si es archivo, esperamos a que el socket lo devuelva (más seguro)
                 }
             });
     }
@@ -414,31 +438,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // 7. VIDEOLLAMADAS (WEBRTC)
     // ============================================================
 
-    // A. Iniciar
-    document.getElementById('startVideoCallBtn').onclick = () => {
-        if(!currentChatFriendId) return;
-        const friend = globalFriendsList.find(f => parseInt(f.id) === currentChatFriendId);
-        
-        currentCallPartner = friend;
-        document.getElementById('callingFriendName').innerText = friend.nombre;
-        callingModal.classList.remove('hidden');
-        
-        socket.emit('video-call-offer', {
-            caller: { id: currentUser.id, nombre: currentUser.nombre },
-            receiver: { id: friend.id }
-        });
-    };
+    if(document.getElementById('startVideoCallBtn')) {
+        document.getElementById('startVideoCallBtn').onclick = () => {
+            if(!currentChatFriendId) return;
+            const friend = globalFriendsList.find(f => parseInt(f.id) === currentChatFriendId);
+            
+            currentCallPartner = friend;
+            document.getElementById('callingFriendName').innerText = friend.nombre;
+            callingModal.classList.remove('hidden');
+            
+            socket.emit('video-call-offer', {
+                caller: { id: currentUser.id, nombre: currentUser.nombre },
+                receiver: { id: friend.id }
+            });
+        };
+    }
 
-    // B. Cancelar
-    document.getElementById('cancelCallBtn').onclick = () => {
-        callingModal.classList.add('hidden');
-        socket.emit('video-call-cancel', { receiverId: currentCallPartner.id });
-        currentCallPartner = null;
-    };
+    if(document.getElementById('cancelCallBtn')) {
+        document.getElementById('cancelCallBtn').onclick = () => {
+            callingModal.classList.add('hidden');
+            socket.emit('video-call-cancel', { receiverId: currentCallPartner.id });
+            currentCallPartner = null;
+        };
+    }
 
-    // C. Recibir
     socket.on('video-call-offer', (data) => {
-        if(currentCallPartner) return; // Ocupado
+        if(currentCallPartner) return; 
         const { caller } = data;
         currentCallPartner = caller;
         
@@ -446,26 +471,27 @@ document.addEventListener('DOMContentLoaded', () => {
         incomingCallModal.classList.remove('hidden');
     });
 
-    // D. Aceptar
-    document.getElementById('acceptCallBtn').onclick = () => {
-        incomingCallModal.classList.add('hidden');
-        socket.emit('video-call-accept', { callerId: currentCallPartner.id, receiver: currentUser });
-        startWebRTC(false); // receiver
-    };
+    if(document.getElementById('acceptCallBtn')) {
+        document.getElementById('acceptCallBtn').onclick = () => {
+            incomingCallModal.classList.add('hidden');
+            socket.emit('video-call-accept', { callerId: currentCallPartner.id, receiver: currentUser });
+            startWebRTC(false); // receiver
+        };
+    }
 
-    // E. Rechazar
-    document.getElementById('rejectCallBtn').onclick = () => {
-        incomingCallModal.classList.add('hidden');
-        socket.emit('video-call-reject', { callerId: currentCallPartner.id });
-        currentCallPartner = null;
-    };
+    if(document.getElementById('rejectCallBtn')) {
+        document.getElementById('rejectCallBtn').onclick = () => {
+            incomingCallModal.classList.add('hidden');
+            socket.emit('video-call-reject', { callerId: currentCallPartner.id });
+            currentCallPartner = null;
+        };
+    }
 
-    // F. Eventos Socket
     socket.on('video-call-accepted', () => {
         callingModal.classList.add('hidden');
         startWebRTC(true); // caller
     });
-    
+
     socket.on('video-call-rejected', () => {
         callingModal.classList.add('hidden');
         alert('Llamada rechazada');
@@ -534,11 +560,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Terminar
-    document.getElementById('endCallBtn').onclick = () => {
-        socket.emit('end-call', { partnerId: currentCallPartner.id });
-        endCallUI();
-    };
+    if(document.getElementById('endCallBtn')) {
+        document.getElementById('endCallBtn').onclick = () => {
+            socket.emit('end-call', { partnerId: currentCallPartner.id });
+            endCallUI();
+        };
+    }
 
     function endCallUI() {
         videoCallContainer.classList.add('hidden');
@@ -599,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     window.toggleChatOptions = () => document.getElementById('chat-options-menu').classList.toggle('hidden');
-    window.openDeleteModal = (id) => deleteFriend(id); // Redirigir al confirm directo o usar modal personalizado si lo tienes
+    window.openDeleteModal = (id) => deleteFriend(id); 
 
     // Filtros
     window.filterFriends = function(type) {

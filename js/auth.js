@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         localStorage.removeItem('saved_email');
                     }
                     
-                    window.location.href = 'Quiniela.html'; 
+                    window.location.href = 'IniciarSesion.html'; 
                 } else {
                     alert(data.message);
                 }

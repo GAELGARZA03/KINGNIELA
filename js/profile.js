@@ -91,12 +91,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    // 4. CERRAR SESIÓN
+// 4. CERRAR SESIÓN
     if (btnLogout) {
         btnLogout.addEventListener('click', function() {
-            // Podrías hacer un fetch a un php/logout.php que haga session_destroy()
-            // Por ahora, simulamos limpieza y redirección
-            fetch('php/logout.php') // Crea un archivo simple que destruya sesión
+            // 1. Desconectar Socket si existe
+            if (window.socket) {
+                window.socket.disconnect();
+            }
+            
+            // 2. Borrar datos locales
+            localStorage.removeItem('kingniela_user');
+            
+            // 3. Cerrar sesión en PHP y redirigir
+            fetch('php/logout.php')
                 .then(() => window.location.href = 'Principal.html');
         });
     }
