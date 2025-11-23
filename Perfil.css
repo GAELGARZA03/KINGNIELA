@@ -193,3 +193,133 @@ input[type="file"] {
 .btn-logout:hover {
     background-color: #ff0000cd;
 }
+
+/* ... (MANTÉN EL INICIO DE TU ARCHIVO ORIGINAL: @font-face, body, main, fondos...) ... */
+@font-face {
+  font-family: 'Megapolis Extra';
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body{
+    font-family: 'Montserrat', sans-serif;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+    flex-grow: 1;
+}
+
+/* --- IMÁGENES DE FONDO --- */
+.Corona_fondo {
+    scale: 100%; position: fixed; width: 65vw; top: 0vh; left: 35vw;
+    z-index: -1; transform: rotate(-35deg);
+}
+.tacha_fondo {
+    scale: 45%; position: fixed; width: 65vw; top: -20vh; right: 42vw;
+    z-index: -1; transform: rotate(-15deg);
+}
+
+/* --- FORMULARIO --- */
+form {
+    background-color: white;
+    padding: 30px 40px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-header {
+    display: flex; align-items: center; justify-content: center; gap: 15px; color: #1a24ad;
+}
+.form-header h2 { margin: 0; font-size: 28px; }
+
+/* Estilo para la foto de perfil redonda en el formulario */
+.profile-pic-large {
+    width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #1a24ad;
+}
+
+form hr {
+    border: none; height: 1px; background-color: #e0e0e0; width: 100%; margin: -5px 0;
+}
+
+/* INPUTS (Incluyendo Date corregido) */
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="date"] {
+    width: 100%;
+    padding: 15px 20px;
+    border: 1px solid #ccc;
+    border-radius: 50px;
+    box-sizing: border-box;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #fff;
+    outline: none;
+}
+
+/* Corrección específica para date (estilo píldora limpio) */
+form input[type="date"] {
+    color: #555;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.form-group { text-align: left; width: 100%; }
+.form-group label {
+    font-size: 14px; color: #555; margin-left: 15px; display: block; margin-bottom: 5px;
+}
+
+/* SELECT */
+form select {
+    width: 100%; padding: 15px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; box-sizing: border-box; background-color: white;
+}
+
+/* UPLOAD SECTION */
+.upload-section {
+    display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
+}
+.upload-section p { margin: 0; color: #555; font-size: 14px; }
+.btn-upload {
+    background-color: #192f8a; color: white; padding: 8px 25px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.3s;
+}
+.btn-upload:hover { background-color: #122261; }
+input[type="file"] { display: none; }
+
+/* CHECKBOX DE ENCRIPTACIÓN */
+.encryption-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+}
+.encryption-group label {
+    margin: 0; cursor: pointer; display: flex; flex-direction: column;
+}
+.tooltip { font-size: 10px; color: #888; font-weight: normal; }
+
+/* Estilo simple para el checkbox */
+.toggle-switch {
+    width: 20px; height: 20px; cursor: pointer; accent-color: #1a24ad;
+}
+
+/* BOTONES ACCIÓN */
+.btn-submit {
+    width: 100%; padding: 15px; background-color: #ffdd00; color: #111; font-size: 16px; font-weight: bold; border: none; border-radius: 50px; margin-top: 10px; cursor: pointer; transition: background 0.3s;
+}
+.btn-submit:hover { background-color: #e9c800; }
+
+.btn-logout {
+    width: 100%; padding: 15px; background-color: #dd0e03; color: #111; font-size: 16px; font-weight: bold; border: none; border-radius: 50px; margin-top: 5px; cursor: pointer; transition: background 0.3s;
+}
+.btn-logout:hover { background-color: #b30b02; }

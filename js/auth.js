@@ -1,5 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     
+    // --- REFERENCIAS GLOBALES ---
+    const loginEmailInput = document.getElementById('loginIdentifier');
+    const rememberCheckbox = document.getElementById('rememberUser');
+
+    // 1. VERIFICAR SI HAY USUARIO RECORDADO AL CARGAR LA PÁGINA
+    // Si existe un correo guardado en localStorage, lo ponemos en el input y marcamos el check
+    if (loginEmailInput && rememberCheckbox) {
+        const savedEmail = localStorage.getItem('saved_email');
+        if (savedEmail) {
+            loginEmailInput.value = savedEmail;
+            rememberCheckbox.checked = true;
+        }
+    }
+
     // --- LÓGICA DE REGISTRO ---
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
@@ -15,8 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     alert(data.message); 
-                    // Opcional: Recargar o cambiar vista para login
-                    window.location.reload(); 
+                    window.location.href = 'Principal.html';
                 } else {
                     alert("Error: " + data.message); 
                 }
@@ -25,13 +38,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- LÓGICA DE LOGIN (ACTUALIZADA) ---
+    // --- LÓGICA DE LOGIN ---
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Obtener valores (ajusta los IDs según tu HTML IniciarSesion.html)
             const email = document.getElementById('loginIdentifier').value;
             const password = document.getElementById('loginPassword').value;
 
@@ -43,10 +55,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Guardar usuario en LocalStorage para usarlo en Social.js y Quiniela.js
+                    // Guardar sesión de usuario actual (datos completos)
                     localStorage.setItem('kingniela_user', JSON.stringify(data.user));
                     
-                    // Redirigir a la página principal de la app
+                    // --- LÓGICA RECORDAR USUARIO ---
+                    // Si el checkbox está marcado, guardamos el correo permanentemente
+                    if (rememberCheckbox && rememberCheckbox.checked) {
+                        localStorage.setItem('saved_email', email);
+                    } else {
+                        // Si no, borramos cualquier rastro previo
+                        localStorage.removeItem('saved_email');
+                    }
+                    
                     window.location.href = 'Quiniela.html'; 
                 } else {
                     alert(data.message);

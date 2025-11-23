@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
-
     <link rel="stylesheet" href="Sesion.css"> 
     <link rel="stylesheet" href="Perfil.css">
 </head>
@@ -39,53 +38,62 @@
             </div>
             <div class="perfil">
                 <a href="Perfil.html">
-                    <img src="Imagenes/I_Perfil.png" alt="Perfil">
+                    <img src="Imagenes/I_Perfil.png" alt="Perfil" id="header-profile-pic">
                 </a>
             </div>
         </div>
     </header>
 
     <main>
-    <form>
-        <div class="form-header">
-            <img src="Imagenes/perfil_icon.png" alt="Icono de perfil"> <h2>Mi perfil</h2>
-        </div>
-        <hr>
-
-        <input type="text" name="Nombre" placeholder="Nombre" required>
-        <input type="text" name="Usuario" placeholder="Nombre de usuario" required>
-
-        <div class="form-group">
-            <label>Fecha de nacimiento</label>
-            <div class="date-selectors">
-                <select name="dia"><option>1</option></select>
-                <select name="mes"><option>Ene.</option></select>
-                <select name="año"><option>2025</option></select>
+        <form id="profileForm">
+            <div class="form-header">
+                <img src="Imagenes/I_Perfil.png" alt="Foto de perfil" id="profile-pic-preview" class="profile-pic-large"> 
+                <h2>Mi perfil</h2>
             </div>
-        </div>
+            <hr>
 
-        <div class="form-group">
-            <label>Género</label>
-            <select name="Genero">
-                <option>Hombre</option>
-                <option>Mujer</option>
-            </select>
-        </div>
-        
-        <div class="upload-section">
-            <p>Agregar foto de Perfil</p>
-            <label for="foto-upload" class="btn-upload">Subir</label>
-            <input type="file" id="foto-upload" name="foto"> </div>
+            <input type="text" id="nombre" name="Nombre" placeholder="Nombre" required>
+            <input type="text" id="usuario" name="Usuario" placeholder="Nombre de usuario" required>
 
-        <input type="email" name="Correo" placeholder="Correo electrónico" required>
-        <input type="password" name="Contraseña" placeholder="Contraseña" required>
+            <div class="form-group">
+                <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                <input type="date" id="fecha_nacimiento" name="FechaNacimiento" required>
+            </div>
 
-        <button type="submit" class="btn-submit">Guardar Cambios</button>
-        <button type="submit" class="btn-logout">Cerrar sesión</button>
-    </form>
+            <div class="form-group">
+                <label for="genero">Género</label>
+                <select id="genero" name="Genero">
+                    <option value="Hombre">Hombre</option>
+                    <option value="Mujer">Mujer</option>
+                    <option value="Otro">Prefiero no decirlo</option>
+                </select>
+            </div>
+            
+            <div class="upload-section">
+                <p>Cambiar foto de Perfil</p>
+                <label for="foto-upload" class="btn-upload">Subir</label>
+                <input type="file" id="foto-upload" name="foto" accept="image/*"> 
+            </div>
+
+            <div class="form-group encryption-group">
+                <label for="encriptacion">
+                    🔒 Encriptar mis mensajes privados
+                    <span class="tooltip">Mayor seguridad para tus chats</span>
+                </label>
+                <input type="checkbox" id="encriptacion" name="Preferencias_Encriptacion" class="toggle-switch">
+            </div>
+
+            <input type="email" id="correo" name="Correo" placeholder="Correo electrónico" required>
+            <input type="password" id="password" name="Contraseña" placeholder="Nueva Contraseña (dejar vacío para no cambiar)">
+
+            <button type="submit" class="btn-submit">Guardar Cambios</button>
+            <button type="button" id="btn-logout" class="btn-logout">Cerrar sesión</button>
+        </form>
     </main>
 
     <img class="Corona_fondo" src="Imagenes/Corona_.png" alt="">
     <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
+
+    <script src="js/profile.js"></script>
 </body>
 </html>
