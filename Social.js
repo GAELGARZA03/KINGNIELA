@@ -1,14 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. VERIFICACIÓN DE USUARIO
+    // ============================================================
+    // 1. VERIFICACIÓN DE USUARIO Y CONEXIÓN
+    // ============================================================
     const currentUser = JSON.parse(localStorage.getItem('kingniela_user'));
     if (!currentUser) {
         window.location.href = 'IniciarSesion.html';
         return;
     }
 
-    // 2. CONEXIÓN SOCKET.IO
-    // Usamos la conexión global si existe, si no, creamos una (fallback)
+    // Usamos la conexión global si existe para no duplicar
+    // Si no existe (ej. entras directo a Social.html), creamos una nueva.
     const socket = window.socket || io('http://localhost:3000'); 
 
     // --- REFERENCIAS DOM ---
@@ -29,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let globalFriendsList = [];
     let globalRequestsList = [];
     let onlineUsersSet = new Set();
-    let currentFilter = 'all'; // Para saber qué pestaña refrescar
+    let currentFilter = 'all';
     
     // WebRTC Variables
     let localStream = null;
@@ -40,51 +42,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ============================================================
-    // 3. SOCKET LISTENERS (LÓGICA DE ESTADO EN LÍNEA)
+    // 2. SOCKET LISTENERS (ESCUCHA DE EVENTOS)
     // ============================================================
 
-    // Función para pedir al servidor quién está conectado
+    // Función para pedir estado inicial
     function requestOnlineUsers() {
         fetch('http://localhost:3000/online-users')
             .then(r => r.json())
             .then(ids => {
-                // Limpiamos y llenamos el Set asegurando que sean NÚMEROS
                 onlineUsersSet.clear();
                 ids.forEach(id => onlineUsersSet.add(parseInt(id)));
-                console.log("👥 Usuarios online actualizados:", Array.from(onlineUsersSet));
-                
-                // Refrescamos la interfaz
-                renderFriends(currentFilter);
+                console.log("👥 Usuarios en línea:", Array.from(onlineUsersSet));
+                renderFriends(currentFilter); 
                 renderChatList();
             })
-            .catch(err => console.log("Error contactando Node:", err));
+            .catch(err => console.log("Node server no responde:", err));
     }
 
-    // Si el socket ya estaba conectado (por socket.js), pedimos datos YA
+    // Si ya estaba conectado, pedimos datos
     if(socket.connected) {
-        console.log("⚡ Socket ya conectado, pidiendo usuarios...");
         requestOnlineUsers();
     }
 
     socket.on('connect', () => {
         console.log('🟢 Social.js conectado al Socket');
-        if(!window.socket) socket.emit('register', currentUser.id);
+        if(!window.socket) {
+            socket.emit('register', currentUser.id);
+        }
         requestOnlineUsers();
     });
 
-    // Escuchar cuando alguien entra o sale
+    // Escuchar cambios de estado (Online/Offline)
     socket.on('user_status', (data) => {
         const uid = parseInt(data.userId);
-        console.log(`🔔 Cambio de estado: Usuario ${uid} está ${data.status}`);
+        console.log(`🔔 Estado usuario ${uid}: ${data.status}`);
         
         if(data.status === 'online') onlineUsersSet.add(uid);
         else onlineUsersSet.delete(uid);
         
-        // Actualizar UI inmediatamente
+        // Actualizar interfaz
         renderFriends(currentFilter); 
-        renderChatList();
+        renderChatList(); 
         
-        // Si estoy chateando con él, actualizar texto header
+        // Si estoy chateando con él, actualizar texto "En línea"
         if(currentChatFriendId == uid) {
              updateChatHeaderStatus(data.status === 'online');
         }
@@ -93,15 +93,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Escuchar mensajes nuevos
     socket.on('newMessage', (msg) => {
         const senderId = parseInt(msg.Id_Remitente || msg.remitente_id || msg.sender_id);
-        // Si es el chat abierto, mostrarlo
+        
+        // Si el mensaje es para mí y tengo el chat abierto con esa persona
         if(currentChatFriendId && senderId === currentChatFriendId) {
             appendMessageToChat(msg, 'received');
+        } else {
+            // Aquí podrías poner un sonido o contador
+            console.log("Nuevo mensaje de", senderId);
         }
     });
 
 
     // ============================================================
-    // 4. CARGA DE DATOS (PHP/MYSQL)
+    // 3. CARGA DE DATOS INICIALES (PHP)
     // ============================================================
     
     loadSocialData();
@@ -113,33 +117,31 @@ document.addEventListener('DOMContentLoaded', () => {
             globalFriendsList = data.friends || [];
             globalRequestsList = data.pending_requests || [];
             
-            renderChatList(); 
-            renderFriends('all'); 
-            // Una vez cargados los amigos, volvemos a pedir estados por si acaso
-            requestOnlineUsers();
+            renderChatList(); // Barra lateral
+            renderFriends('all'); // Vista principal
         })
-        .catch(e => console.error("Error cargando amigos:", e));
+        .catch(e => console.error("Error cargando datos sociales:", e));
     }
 
 
     // ============================================================
-    // 5. RENDERIZADO DE INTERFAZ
+    // 4. RENDERIZADO DE LISTAS (AMIGOS Y CHATS)
     // ============================================================
 
     window.renderFriends = function(filter) {
-        currentFilter = filter; // Guardamos el filtro actual
+        currentFilter = filter;
         const grid = document.getElementById('friends-grid');
         if(!grid) return;
         grid.innerHTML = "";
         
-        // Botones visuales
+        // Botones filtro visuales
         const btnAll = document.getElementById('btn-all');
         const btnOnline = document.getElementById('btn-online');
         if(btnAll) btnAll.classList.toggle('active', filter === 'all');
         if(btnOnline) btnOnline.classList.toggle('active', filter === 'online');
 
         if (filter === 'all') {
-            // A. Solicitudes
+            // A. Solicitudes Pendientes
             if (globalRequestsList.length > 0) {
                 const h3 = document.createElement('h3'); 
                 h3.innerText = "Solicitudes"; 
@@ -148,7 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 globalRequestsList.forEach(req => grid.appendChild(createFriendCard(req, 'request')));
                 
-                const hr = document.createElement('hr'); hr.className='separator'; grid.appendChild(hr);
+                const hr = document.createElement('hr'); 
+                hr.className='separator';
+                grid.appendChild(hr);
             }
 
             // B. Amigos
@@ -159,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } else if (filter === 'online') {
-            // C. Solo En Línea
+            // C. Solo Amigos En Línea
             const online = globalFriendsList.filter(f => onlineUsersSet.has(parseInt(f.id)));
             if(online.length === 0) {
                 grid.innerHTML = "<p style='text-align:center;color:#ccc;padding:20px;'>Nadie en línea.</p>";
@@ -173,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = 'friend';
         
-        // CORRECCIÓN CLAVE: Parsear siempre a entero para comparar
         const isOnline = onlineUsersSet.has(parseInt(user.id));
         const statusColor = isOnline ? '#00ff26' : 'gray';
         const statusText = isOnline ? 'En línea' : 'Desconectado';
@@ -182,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatar = user.avatar || 'Imagenes/I_Perfil.png';
 
         let actionsHtml = '';
+        
         if(type === 'request') {
             actionsHtml = `
                 <div class="friend-actions">
@@ -200,12 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="friend-info">
                 <img src="${avatar}" class="profile-pic">
                 <div>
-                    <div class="name-container"><strong>${user.nombre}</strong>${crown}</div>
+                    <div class="name-container">
+                        <strong>${user.nombre}</strong>${crown}
+                    </div>
                     ${type === 'friend' ? 
                       `<span style="font-size:12px;color:#ccc;display:flex;align-items:center;gap:5px;">
                          <span class="status-dot" style="background:${statusColor};width:8px;height:8px;border-radius:50%;"></span> ${statusText}
                        </span>` 
-                      : '<span style="font-size:12px;color:#ffdd00">Pendiente</span>'}
+                      : '<span style="font-size:12px;color:#ffdd00">Solicitud Pendiente</span>'}
                 </div>
             </div>
             ${actionsHtml}
@@ -226,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const crown = friend.corona ? `<img src="${friend.corona}" class="crown-badge">` : '';
             const avatar = friend.avatar || 'Imagenes/I_Perfil.png';
             
-            // Puntito en sidebar también
+            // Puntito en sidebar
             const isOnline = onlineUsersSet.has(parseInt(friend.id));
             const dotColor = isOnline ? '#00ff26' : 'gray';
 
@@ -243,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ============================================================
-    // 6. CHAT Y MULTIMEDIA
+    // 5. CHAT, MULTIMEDIA Y ENVÍO
     // ============================================================
 
     window.openChat = function(friendId) {
@@ -259,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateChatHeaderStatus(onlineUsersSet.has(parseInt(friendId)));
 
+        // Mostrar vista chat
         document.getElementById('friends-view').classList.add('hidden');
         document.getElementById('chat-view').classList.remove('hidden');
 
@@ -295,25 +302,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if(type === 'sent') div.style.alignSelf = 'flex-end';
         
         let contentHtml = '';
-        const tipo = msg.Tipo || msg.tipo;
-        const contenido = msg.Contenido || msg.contenido;
+        const msgType = msg.Tipo || msg.tipo;
+        const content = msg.Contenido || msg.contenido;
 
-        switch(tipo) {
+        switch(msgType) {
             case 'imagen': 
-                contentHtml = `<img src="${contenido}" style="max-width:200px; border-radius:10px;">`; 
+                contentHtml = `<img src="${content}" style="max-width:200px; border-radius:10px;">`; 
                 break;
             case 'audio': 
-                contentHtml = `<div class="audio-message"><button class="play-btn">▶</button><div class="progress-bar"><div class="progress-fill"></div></div><span class="audio-time">Audio</span><audio src="${contenido}"></audio></div>`; 
+                contentHtml = `<div class="audio-message"><button class="play-btn">▶</button><div class="progress-bar"><div class="progress-fill"></div></div><span class="audio-time">Audio</span><audio src="${content}"></audio></div>`; 
                 break;
             case 'ubicacion':
-                contentHtml = `<a href="https://maps.google.com/?q=${contenido}" target="_blank" style="color:#ffdd00; text-decoration:underline;">📍 Ver Ubicación</a>`;
+                contentHtml = `<a href="https://maps.google.com/?q=${content}" target="_blank" style="color:#ffdd00; text-decoration:underline;">📍 Ver Ubicación</a>`;
                 break;
             case 'archivo':
-                const name = contenido.split('/').pop().substring(14); // Limpiar nombre
-                contentHtml = `<a href="${contenido}" download style="color:white; text-decoration:underline;">📎 ${name}</a>`;
+                const name = content.split('/').pop().substring(14); // Intentar limpiar nombre
+                contentHtml = `<a href="${content}" download style="color:white; text-decoration:underline;">📎 ${name}</a>`;
                 break;
             default: 
-                contentHtml = `<p style="margin:0;">${contenido}</p>`;
+                contentHtml = `<p style="margin:0;">${content}</p>`;
         }
 
         const dateObj = msg.Fecha_Envio ? new Date(msg.Fecha_Envio) : new Date();
@@ -327,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         chatMessages.appendChild(div);
         
-        if(tipo === 'audio') activateAudio(div);
+        if(msgType === 'audio') activateAudio(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
@@ -337,76 +344,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const fill = el.querySelector('.progress-fill');
         
         if(!audio || !btn) return;
+
         btn.onclick = () => audio.paused ? audio.play() : audio.pause();
         audio.onplay = () => btn.innerText = '⏸';
         audio.onpause = () => btn.innerText = '▶';
-        audio.ontimeupdate = () => { if(audio.duration) fill.style.width = (audio.currentTime / audio.duration * 100) + '%'; };
-        audio.onended = () => { btn.innerText = '▶'; fill.style.width = '0%'; }
-    }
-
-    // ENVÍO
-    window.sendMessage = function() {
-        const text = messageInput.value.trim();
-        if(!text) return;
-        sendPayload({ action: 'send', content: text, tipo: 'texto' });
-        messageInput.value = "";
-    }
-
-    if(document.getElementById('attachFileBtn')) {
-        document.getElementById('attachFileBtn').onclick = () => fileInput.click();
-        fileInput.onchange = () => {
-            if(fileInput.files[0]) {
-                const fd = new FormData();
-                fd.append('action', 'send_file');
-                fd.append('file', fileInput.files[0]);
-                sendPayload(fd, true);
-                fileInput.value = ""; 
-            }
+        audio.ontimeupdate = () => {
+            if(audio.duration) fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
         };
+        audio.onended = () => {
+            btn.innerText = '▶';
+            fill.style.width = '0%';
+        }
     }
 
-    if(document.getElementById('shareLocationBtn')) {
-        document.getElementById('shareLocationBtn').onclick = () => {
-            if(!navigator.geolocation) return alert("Navegador no soporta geolocalización");
-            navigator.geolocation.getCurrentPosition(pos => {
-                sendPayload({ action: 'send', content: `${pos.coords.latitude},${pos.coords.longitude}`, tipo: 'ubicacion' });
-            });
-        };
-    }
-
-    // Grabador Audio
-    let mediaRecorder;
-    const btnRec = document.getElementById('recordAudioBtn');
-    if(btnRec) {
-        btnRec.onclick = async () => {
-            if(mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                btnRec.style.color = '#ccc';
-            } else {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    const chunks = [];
-                    mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(chunks, { type: 'audio/webm' });
-                        const file = new File([blob], "audio_msg.webm", { type: "audio/webm" });
-                        const fd = new FormData();
-                        fd.append('action', 'send_file');
-                        fd.append('file', file);
-                        sendPayload(fd, true);
-                    };
-                    mediaRecorder.start();
-                    btnRec.style.color = 'red'; 
-                } catch(e) {
-                    alert("Permiso de micrófono denegado");
-                }
-            }
-        };
-    }
-
+    // --- FUNCIÓN DE ENVÍO UNIFICADA ---
     function sendPayload(data, isFile = false) {
         if(!currentChatFriendId) return;
+        
         let body;
         if(isFile) {
             body = data; 
@@ -425,23 +379,114 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(r => r.json())
             .then(res => {
                 if(res.success) {
-                    if(!isFile && data.tipo === 'texto') {
+                    // Si el PHP nos devuelve los datos del mensaje guardado (incluyendo URL de archivo)
+                    if(res.message_data) {
+                        appendMessageToChat(res.message_data, 'sent');
+                    } 
+                    // Fallback para texto simple si PHP no devolvió data
+                    else if(!isFile && data.tipo === 'texto') {
                         appendMessageToChat({ Contenido: data.content, Tipo: data.tipo, Fecha_Envio: new Date() }, 'sent');
                     }
+                } else {
+                    alert("Error al enviar: " + (res.message || 'Desconocido'));
                 }
+            })
+            .catch(e => console.error("Error red:", e));
+    }
+
+    // EVENTOS DE BOTONES DE CHAT
+    window.sendMessage = function() {
+        const text = messageInput.value.trim();
+        if(!text) return;
+        sendPayload({ action: 'send', content: text, tipo: 'texto' });
+        messageInput.value = "";
+    }
+
+    // Botones Multimedia
+    const toggleMenuBtn = document.getElementById('toggleMenuBtn');
+    const plusMenu = document.getElementById('plus-menu');
+    
+    if(toggleMenuBtn && plusMenu) {
+        toggleMenuBtn.onclick = (e) => {
+            e.stopPropagation();
+            plusMenu.classList.toggle('hidden');
+            toggleMenuBtn.classList.toggle('active');
+        };
+        document.addEventListener('click', (e) => {
+            if (!plusMenu.contains(e.target) && e.target !== toggleMenuBtn) {
+                plusMenu.classList.add('hidden');
+                toggleMenuBtn.classList.remove('active');
+            }
+        });
+    }
+
+    if(document.getElementById('attachFileBtn')) {
+        document.getElementById('attachFileBtn').onclick = () => {
+            fileInput.click();
+            if(plusMenu) plusMenu.classList.add('hidden');
+        };
+        fileInput.onchange = () => {
+            if(fileInput.files[0]) {
+                const fd = new FormData();
+                fd.append('action', 'send_file');
+                fd.append('file', fileInput.files[0]);
+                sendPayload(fd, true);
+                fileInput.value = ""; 
+            }
+        };
+    }
+
+    if(document.getElementById('shareLocationBtn')) {
+        document.getElementById('shareLocationBtn').onclick = () => {
+            if(plusMenu) plusMenu.classList.add('hidden');
+            if(!navigator.geolocation) return alert("Navegador no soporta geolocalización");
+            navigator.geolocation.getCurrentPosition(pos => {
+                sendPayload({ action: 'send', content: `${pos.coords.latitude},${pos.coords.longitude}`, tipo: 'ubicacion' });
             });
+        };
+    }
+
+    // Grabador Audio
+    let mediaRecorder;
+    const btnRec = document.getElementById('recordAudioBtn');
+    if(btnRec) {
+        btnRec.onclick = async () => {
+            if(mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btnRec.classList.remove('recording'); // Quitar estilo rojo
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'audio/webm' });
+                        const file = new File([blob], "audio_msg.webm", { type: "audio/webm" });
+                        const fd = new FormData();
+                        fd.append('action', 'send_file');
+                        fd.append('file', file);
+                        sendPayload(fd, true);
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    mediaRecorder.start();
+                    btnRec.classList.add('recording'); // Poner estilo rojo
+                } catch(e) {
+                    alert("Permiso de micrófono denegado");
+                }
+            }
+        };
     }
 
 
     // ============================================================
-    // 7. VIDEOLLAMADAS (WEBRTC)
+    // 6. VIDEOLLAMADAS (WEBRTC)
     // ============================================================
 
     if(document.getElementById('startVideoCallBtn')) {
         document.getElementById('startVideoCallBtn').onclick = () => {
             if(!currentChatFriendId) return;
             const friend = globalFriendsList.find(f => parseInt(f.id) === currentChatFriendId);
-            
             currentCallPartner = friend;
             document.getElementById('callingFriendName').innerText = friend.nombre;
             callingModal.classList.remove('hidden');
@@ -503,12 +548,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('call-ended', () => endCallUI());
 
-    // G. WebRTC
+    // G. WebRTC Core
     async function startWebRTC(isCaller) {
         videoCallContainer.classList.remove('hidden');
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             localVideo.srcObject = localStream;
+            
             peerConnection = new RTCPeerConnection(iceServers);
             localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
@@ -571,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ============================================================
-    // 8. ACCIONES DE AMISTAD Y UI
+    // 7. ACCIONES DE AMISTAD (FETCH)
     // ============================================================
     
     window.sendFriendRequest = function() {
@@ -584,10 +630,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.rejectRequest = (id) => { if(confirm("¿Rechazar solicitud?")) fetch('php/friends.php', { method: 'POST', body: JSON.stringify({ action: 'reject_friend', friendship_id: id })}).then(()=>loadSocialData()); }
     window.deleteFriend = (id) => { if(confirm("¿Eliminar de amigos?")) fetch('php/friends.php', { method: 'POST', body: JSON.stringify({ action: 'delete_friend', friend_id: id, user_id: currentUser.id })}).then(()=>loadSocialData()); }
 
+    // UI Helpers
     window.openAddFriendModal = () => document.getElementById('addFriendModal').classList.remove('hidden');
     window.closeAddFriendModal = () => document.getElementById('addFriendModal').classList.add('hidden');
     window.closeChat = () => { currentChatFriendId = null; document.getElementById('chat-view').classList.add('hidden'); document.getElementById('friends-view').classList.remove('hidden'); }
-    window.toggleChatOptions = () => document.getElementById('chat-options-menu').classList.toggle('hidden');
     window.openDeleteModal = (id) => deleteFriend(id); 
     window.filterFriends = (t) => renderFriends(t);
 
