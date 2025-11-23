@@ -98,4 +98,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => false, 'message' => 'Error al actualizar: ' . $e->getMessage()]);
     }
 }
+
+// --- OBTENER DATOS (GET) ---
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    try {
+        // CAMBIO: Añadimos el JOIN para traer la corona
+        $sql = "SELECT u.Nombre_Usuario, u.Fecha_Nacimiento, u.Genero, u.Correo, u.Avatar, u.Preferencias_Encriptacion, c.Imagen_Url as Corona
+                FROM USUARIO u
+                LEFT JOIN CORONA_ACTIVA ca ON u.Id_Usuario = ca.Id_Usuario
+                LEFT JOIN CORONA c ON ca.Id_Corona = c.Id_Corona
+                WHERE u.Id_Usuario = ?";
+                
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user) {
+            echo json_encode(['success' => true, 'data' => $user]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Usuario no encontrado']);
+        }
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Error BD: ' . $e->getMessage()]);
+    }
+    exit;
+}
 ?>
