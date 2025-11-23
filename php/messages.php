@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 require 'conexion.php';
 
-// --- FUNCIÓN SOCKET (Igual que antes) ---
+// --- FUNCIÓN SOCKET ---
 function broadcastToSocket($message) {
     $data = [
         'sender_id'   => intval($message['Id_Remitente']),
@@ -57,9 +57,18 @@ if ($method === 'POST') {
             $contenido = 'uploads/' . $fileName;
             
             $mime = mime_content_type($uploadDir . $fileName);
-            if (strpos($mime, 'image') !== false) $tipo = 'imagen';
-            else if (strpos($mime, 'audio') !== false) $tipo = 'audio';
-            else $tipo = 'archivo';
+            
+            // --- CORRECCIÓN AQUÍ ---
+            // Si es imagen -> imagen
+            // Si es audio O video (los webm de grabación a veces son video) -> AUDIO
+            if (strpos($mime, 'image') !== false) {
+                $tipo = 'imagen';
+            } else if (strpos($mime, 'audio') !== false || strpos($mime, 'video') !== false) {
+                $tipo = 'audio';
+            } else {
+                $tipo = 'archivo';
+            }
+            
         } else {
             echo json_encode(['success' => false, 'message' => 'Error al mover archivo']);
             exit;
@@ -95,14 +104,13 @@ if ($method === 'POST') {
             broadcastToSocket($newMessage);
         }
 
-        // CAMBIO CLAVE: Devolvemos el mensaje completo en 'data'
         echo json_encode(['success' => true, 'message_data' => $newMessage]);
 
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Error BD: ' . $e->getMessage()]);
     }
 } else {
-    // GET (Sin cambios mayores)
+    // GET (Sin cambios)
     $sender = $_GET['sender_id'] ?? 0;
     $receiver = $_GET['receiver_id'] ?? 0;
     try {

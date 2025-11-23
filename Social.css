@@ -983,7 +983,10 @@ main {
     animation: pulse 1.5s infinite;
 }
 .mic-btn.recording .icon-mic { display: none; }
-.mic-btn.recording .icon-stop { display: block; }
+
+/* CORRECCIÓN: Usamos !important para que se vea aunque tenga la clase hidden */
+.mic-btn.recording .icon-stop { display: block !important; } 
+
 .icon-stop { display: none; } /* Oculto por defecto */
 
 @keyframes pulse {

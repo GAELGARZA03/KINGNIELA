@@ -1,16 +1,19 @@
-// js/socket.js
-// Configuración
-const SOCKET_URL = 'http://localhost:3000'; 
+// ==========================================
+// CONFIGURACIÓN CENTRAL (Edita aquí tu IP)
+// ==========================================
+// Cambia 'localhost' por tu IP (ej. '192.168.1.50') para probar en otros dispositivos
+window.SERVER_URL = 'http://localhost:3000'; 
+// ==========================================
 
-// Verificar si hay usuario guardado
+// js/socket.js
 const currentUserGlobal = JSON.parse(localStorage.getItem('kingniela_user'));
 
 if (currentUserGlobal) {
-    // Si no existe una conexión previa, la creamos
+    // Si no existe una conexión previa, la creamos usando la URL global
     if (!window.socket) {
-        console.log("🔄 Iniciando conexión global al Socket...");
+        console.log("🔄 Iniciando conexión global al Socket en: " + window.SERVER_URL);
         
-        window.socket = io(SOCKET_URL);
+        window.socket = io(window.SERVER_URL);
 
         window.socket.on('connect', () => {
             console.log(`✅ Conectado como ${currentUserGlobal.nombre} (${currentUserGlobal.id})`);

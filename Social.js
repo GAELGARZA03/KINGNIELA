@@ -9,9 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Usamos la URL global definida en socket.js, o un fallback
+    const serverUrl = window.SERVER_URL || 'http://localhost:3000';
+    
     // Usamos la conexión global si existe para no duplicar
-    // Si no existe (ej. entras directo a Social.html), creamos una nueva.
-    const socket = window.socket || io('http://localhost:3000'); 
+    const socket = window.socket || io(serverUrl); 
 
     // --- REFERENCIAS DOM ---
     const chatMessages = document.getElementById('chat-messages');
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Función para pedir estado inicial
     function requestOnlineUsers() {
-        fetch('http://localhost:3000/online-users')
+        fetch(`${serverUrl}/online-users`)
             .then(r => r.json())
             .then(ids => {
                 onlineUsersSet.clear();
@@ -75,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Escuchar cambios de estado (Online/Offline)
     socket.on('user_status', (data) => {
         const uid = parseInt(data.userId);
-        console.log(`🔔 Estado usuario ${uid}: ${data.status}`);
         
         if(data.status === 'online') onlineUsersSet.add(uid);
         else onlineUsersSet.delete(uid);
@@ -93,13 +94,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Escuchar mensajes nuevos
     socket.on('newMessage', (msg) => {
         const senderId = parseInt(msg.Id_Remitente || msg.remitente_id || msg.sender_id);
+        const receiverId = parseInt(msg.Id_Destinatario || msg.destinatario_id || msg.receiver_id);
         
-        // Si el mensaje es para mí y tengo el chat abierto con esa persona
-        if(currentChatFriendId && senderId === currentChatFriendId) {
-            appendMessageToChat(msg, 'received');
+        // Lógica para mostrar el mensaje en tiempo real:
+        // 1. Si me lo enviaron a MÍ y estoy en el chat con el remitente.
+        // 2. Si YO lo envié (desde otra pestaña/celular o ESTA MISMA) y estoy en el chat con el destinatario.
+        
+        const isChatOpenWithSender = (currentChatFriendId && senderId === currentChatFriendId);
+        const isChatOpenWithReceiver = (currentChatFriendId && receiverId === currentChatFriendId && senderId === currentUser.id);
+
+        if (isChatOpenWithSender || isChatOpenWithReceiver) {
+            const isMe = senderId === currentUser.id;
+            appendMessageToChat(msg, isMe ? 'sent' : 'received');
         } else {
-            // Aquí podrías poner un sonido o contador
-            console.log("Nuevo mensaje de", senderId);
+            console.log("Mensaje de fondo de", senderId);
         }
     });
 
@@ -310,13 +318,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentHtml = `<img src="${content}" style="max-width:200px; border-radius:10px;">`; 
                 break;
             case 'audio': 
-                contentHtml = `<div class="audio-message"><button class="play-btn">▶</button><div class="progress-bar"><div class="progress-fill"></div></div><span class="audio-time">Audio</span><audio src="${content}"></audio></div>`; 
+                contentHtml = `
+                    <div class="audio-message">
+                        <button class="play-btn">▶</button>
+                        <div class="progress-bar"><div class="progress-fill"></div></div>
+                        <span class="audio-time">0:00</span>
+                        <audio src="${content}" preload="metadata"></audio>
+                    </div>`; 
                 break;
             case 'ubicacion':
-                contentHtml = `<a href="https://maps.google.com/?q=${content}" target="_blank" style="color:#ffdd00; text-decoration:underline;">📍 Ver Ubicación</a>`;
+                contentHtml = `<a href="https://www.google.com/maps/search/?api=1&query=${content}" target="_blank" style="color:#ffdd00; text-decoration:underline;">📍 Ver Ubicación</a>`;
                 break;
             case 'archivo':
-                const name = content.split('/').pop().substring(14); // Intentar limpiar nombre
+                const name = content.split('/').pop().substring(14);
                 contentHtml = `<a href="${content}" download style="color:white; text-decoration:underline;">📎 ${name}</a>`;
                 break;
             default: 
@@ -338,26 +352,54 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
+    // --- REPRODUCTOR DE AUDIO ROBUSTO ---
     function activateAudio(el) {
         const btn = el.querySelector('.play-btn');
         const audio = el.querySelector('audio');
         const fill = el.querySelector('.progress-fill');
+        const timeDisplay = el.querySelector('.audio-time');
         
         if(!audio || !btn) return;
 
-        btn.onclick = () => audio.paused ? audio.play() : audio.pause();
+        const formatTime = (seconds) => {
+            if(isNaN(seconds)) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        };
+
+        audio.addEventListener('loadedmetadata', () => {
+            timeDisplay.innerText = formatTime(audio.duration);
+        });
+
+        btn.onclick = () => {
+            if (audio.paused) {
+                document.querySelectorAll('audio').forEach(a => { if(a !== audio) { a.pause(); a.currentTime = 0; } });
+                audio.play().catch(e => console.error("Error reproducción:", e));
+            } else {
+                audio.pause();
+            }
+        };
+
         audio.onplay = () => btn.innerText = '⏸';
         audio.onpause = () => btn.innerText = '▶';
+        
         audio.ontimeupdate = () => {
-            if(audio.duration) fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+            if(audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                fill.style.width = percent + '%';
+                timeDisplay.innerText = formatTime(audio.currentTime);
+            }
         };
+
         audio.onended = () => {
             btn.innerText = '▶';
             fill.style.width = '0%';
+            timeDisplay.innerText = formatTime(audio.duration);
         }
     }
 
-    // --- FUNCIÓN DE ENVÍO UNIFICADA ---
+    // --- FUNCIÓN DE ENVÍO UNIFICADA (CORREGIDA: SIN APPEND MANUAL) ---
     function sendPayload(data, isFile = false) {
         if(!currentChatFriendId) return;
         
@@ -378,18 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('php/messages.php', { method: 'POST', body: body })
             .then(r => r.json())
             .then(res => {
-                if(res.success) {
-                    // Si el PHP nos devuelve los datos del mensaje guardado (incluyendo URL de archivo)
-                    if(res.message_data) {
-                        appendMessageToChat(res.message_data, 'sent');
-                    } 
-                    // Fallback para texto simple si PHP no devolvió data
-                    else if(!isFile && data.tipo === 'texto') {
-                        appendMessageToChat({ Contenido: data.content, Tipo: data.tipo, Fecha_Envio: new Date() }, 'sent');
-                    }
-                } else {
+                if(!res.success) {
                     alert("Error al enviar: " + (res.message || 'Desconocido'));
                 }
+                // AQUÍ ELIMINAMOS EL APPEND MANUAL
+                // Confiamos en que el socket activará 'newMessage' para mí también.
             })
             .catch(e => console.error("Error red:", e));
     }
@@ -446,33 +481,43 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Grabador Audio
+    // --- GRABADORA DE AUDIO ---
     let mediaRecorder;
     const btnRec = document.getElementById('recordAudioBtn');
+    
     if(btnRec) {
         btnRec.onclick = async () => {
             if(mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
-                btnRec.classList.remove('recording'); // Quitar estilo rojo
+                btnRec.classList.remove('recording'); 
+                console.log("Grabación detenida");
             } else {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     const chunks = [];
+                    
                     mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                    
                     mediaRecorder.onstop = () => {
                         const blob = new Blob(chunks, { type: 'audio/webm' });
                         const file = new File([blob], "audio_msg.webm", { type: "audio/webm" });
+                        
                         const fd = new FormData();
                         fd.append('action', 'send_file');
                         fd.append('file', file);
                         sendPayload(fd, true);
+                        
                         stream.getTracks().forEach(track => track.stop());
                     };
+                    
                     mediaRecorder.start();
-                    btnRec.classList.add('recording'); // Poner estilo rojo
+                    btnRec.classList.add('recording'); 
+                    console.log("Grabando audio...");
+                    
                 } catch(e) {
-                    alert("Permiso de micrófono denegado");
+                    console.error(e);
+                    alert("No se pudo acceder al micrófono.");
                 }
             }
         };
@@ -518,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('acceptCallBtn').onclick = () => {
             incomingCallModal.classList.add('hidden');
             socket.emit('video-call-accept', { callerId: currentCallPartner.id, receiver: currentUser });
-            startWebRTC(false); // receiver
+            startWebRTC(false); 
         };
     }
 
@@ -532,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('video-call-accepted', () => {
         callingModal.classList.add('hidden');
-        startWebRTC(true); // caller
+        startWebRTC(true); 
     });
 
     socket.on('video-call-rejected', () => {
@@ -548,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('call-ended', () => endCallUI());
 
-    // G. WebRTC Core
+    // WebRTC Core
     async function startWebRTC(isCaller) {
         videoCallContainer.classList.remove('hidden');
         try {
