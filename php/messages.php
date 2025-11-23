@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 require 'conexion.php';
 
-// --- FUNCIÓN SOCKET (IGUAL QUE ANTES) ---
+// --- FUNCIÓN PARA ENVIAR AL SOCKET (Node.js) ---
 function broadcastToSocket($message) {
     $data = [
         'sender_id'   => intval($message['Id_Remitente']),
@@ -21,6 +21,7 @@ function broadcastToSocket($message) {
     curl_close($ch);
 }
 
+// --- FUNCIÓN PARA NOTIFICAR LECTURA ---
 function broadcastReadStatus($reader_id, $original_sender_id) {
     $data = ['reader_id' => $reader_id, 'original_sender_id' => $original_sender_id];
     $payload = json_encode($data);
@@ -35,18 +36,20 @@ function broadcastReadStatus($reader_id, $original_sender_id) {
     curl_close($ch);
 }
 
+
 $method = $_SERVER['REQUEST_METHOD'];
 
+// --- ENVIAR MENSAJE (POST) ---
 if ($method === 'POST') {
     $action = $_POST['action'] ?? '';
     $remitente = $_POST['sender_id'] ?? 0;
     $destinatario = $_POST['receiver_id'] ?? 0;
     
+    // Variables principales
     $contenido = '';
     $tipo = 'texto';
-    $urlArchivo = null; // Se mantiene por compatibilidad, pero Contenido tendrá lo importante
     
-    // --- LOGICA DE ARCHIVOS MODIFICADA ---
+    // 1. SI ES UN ARCHIVO (IMAGEN/AUDIO)
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
         $fileTmp = $_FILES['file']['tmp_name'];
         $fileName = uniqid() . '_' . $_FILES['file']['name'];
@@ -55,63 +58,87 @@ if ($method === 'POST') {
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
         
         if (move_uploaded_file($fileTmp, $uploadDir . $fileName)) {
-            $webPath = 'uploads/' . $fileName;
+            // AQUÍ ESTÁ LA CLAVE: Guardamos la ruta DIRECTAMENTE en 'Contenido'
+            $contenido = 'uploads/' . $fileName;
             
-            // AQUÍ ESTÁ EL CAMBIO QUE PEDISTE:
-            // Guardamos la RUTA en el contenido, no el nombre.
-            $contenido = $webPath; 
-            $urlArchivo = $webPath; // También lo dejamos aquí por si acaso
-
-            // Detectar tipo
-            $tipo = 'archivo'; // Default
+            // Detectar tipo MIME
             $mime = mime_content_type($uploadDir . $fileName);
             if (strpos($mime, 'image') !== false) $tipo = 'imagen';
             else if (strpos($mime, 'audio') !== false) $tipo = 'audio';
-            else if (strpos($mime, 'video') !== false) $tipo = 'video';
+            else $tipo = 'archivo'; // PDF u otros
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error al mover archivo']);
+            exit;
         }
-    } else {
+    } 
+    // 2. SI ES TEXTO O UBICACIÓN
+    else {
         $contenido = $_POST['content'] ?? '';
         $tipo = $_POST['tipo'] ?? 'texto';
     }
 
+    if ($contenido === '') {
+        echo json_encode(['success' => false, 'message' => 'Contenido vacío']);
+        exit;
+    }
+
     try {
         $estaEncriptado = 1; 
-        $sql = "INSERT INTO MENSAJE (Id_Remitente, Id_Destinatario, Contenido, Tipo, Url_Archivo, Esta_Encriptado) 
-                VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$remitente, $destinatario, $contenido, $tipo, $urlArchivo, $estaEncriptado]);
+
+        // INSERTAR EN LA BASE DE DATOS (Solo usamos 'Contenido' y 'Tipo')
+        // NO usamos Url_Archivo
+        $sql = "INSERT INTO MENSAJE (Id_Remitente, Id_Destinatario, Contenido, Tipo, Esta_Encriptado) 
+                VALUES (?, ?, ?, ?, ?)";
         
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$remitente, $destinatario, $contenido, $tipo, $estaEncriptado]);
+        
+        // Recuperar el mensaje para enviarlo al socket
         $lastId = $pdo->lastInsertId();
         $stmtGet = $pdo->prepare("SELECT * FROM MENSAJE WHERE Id_Mensaje = ?");
         $stmtGet->execute([$lastId]);
         $newMessage = $stmtGet->fetch(PDO::FETCH_ASSOC);
 
-        if ($newMessage) broadcastToSocket($newMessage);
+        if ($newMessage) {
+            broadcastToSocket($newMessage);
+        }
 
         echo json_encode(['success' => true]);
 
     } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error BD: ' . $e->getMessage()]);
     }
-} else {
-    // GET (Obtener mensajes) - Sin cambios
+}
+
+// --- OBTENER MENSAJES (GET) ---
+else {
     $sender = $_GET['sender_id'] ?? 0;
     $receiver = $_GET['receiver_id'] ?? 0;
+    
     try {
+        // Marcar como leídos
         $updateSql = "UPDATE MENSAJE SET Leido = 1 WHERE Id_Remitente = ? AND Id_Destinatario = ? AND Leido = 0";
         $stmtUpdate = $pdo->prepare($updateSql);
         $stmtUpdate->execute([$receiver, $sender]);
 
-        if ($stmtUpdate->rowCount() > 0) broadcastReadStatus($sender, $receiver);
+        if ($stmtUpdate->rowCount() > 0) {
+            broadcastReadStatus($sender, $receiver);
+        }
 
-        $sql = "SELECT * FROM MENSAJE 
+        // Obtener historial
+        // NO seleccionamos Url_Archivo porque ya no la usamos/queremos
+        $sql = "SELECT Id_Mensaje, Id_Remitente, Id_Destinatario, Contenido, Tipo, Fecha_Envio, Leido 
+                FROM MENSAJE 
                 WHERE (Id_Remitente = ? AND Id_Destinatario = ?) 
                    OR (Id_Remitente = ? AND Id_Destinatario = ?)
                 ORDER BY Fecha_Envio ASC";
+        
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$sender, $receiver, $receiver, $sender]);
         $mensajes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
         echo json_encode($mensajes);
+
     } catch (PDOException $e) {
         echo json_encode(['error' => $e->getMessage()]);
     }
