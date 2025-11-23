@@ -1,18 +1,17 @@
 @font-face {
-  font-family: 'Megapolis Extra'; /* El nombre que le das a tu fuente */
-  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2'); /* Ruta al archivo */
+  font-family: 'Megapolis Extra';
+  src: url('fonts/MegalopolisExtra-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
 
 body {
     margin: 0;
-    font-family: 'Monserrat', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     background: radial-gradient(ellipse farthest-corner at center, #2433FF, #262C80);
     background-attachment: fixed;
     color: white;
-    padding-bottom: 50px; /* Espacio para que el form no choque abajo */
-    
+    padding-bottom: 50px;
 }
 
 header {
@@ -26,23 +25,21 @@ header {
 
 .Corona_fondo {
     scale: 130%;
-    position: fixed; /* Fija la imagen a la ventana */
+    position: fixed;
     width: 65vw; 
     top: 0vh;  
     right: 10vw;
     z-index: -1; 
-
     transform: rotate(-30deg);
 }
 
 .tacha_fondo {
     scale: 40%;
-    position: fixed; /* Fija la imagen a la ventana */
+    position: fixed;
     width: 65vw; 
     top: -50vh;  
     right: 45vw;
     z-index: -1; 
-
     transform: rotate(-30deg);
 }
 
@@ -88,18 +85,26 @@ form hr {
     margin-bottom: 10px;
 }
 
-
+/* === AQUÍ ESTÁ LA CORRECCIÓN IMPORTANTE === */
 form input[type="text"],
 form input[type="email"],
-form input[type="password"] {
+form input[type="password"],
+form input[type="date"] {  /* <--- Agregado type="date" aquí */
     width: 100%;
-    padding: 15px;
+    padding: 15px 20px;
     border: 1px solid #ccc;
     border-radius: 50px; 
     box-sizing: border-box; 
     font-size: 16px;
+    font-family: 'Montserrat', sans-serif; /* Asegura la misma fuente */
+    background-color: #fff;
+    outline: none; /* Quita el borde azul al seleccionar */
 }
 
+/* Ajuste específico para que el texto de la fecha no quede pegado */
+form input[type="date"] {
+    color: #555;
+}
 
 .form-group {
     text-align: left; 
@@ -113,7 +118,6 @@ form input[type="password"] {
     margin-bottom: 5px;
 }
 
-
 .date-selectors {
     display: flex;
     gap: 10px; 
@@ -121,7 +125,6 @@ form input[type="password"] {
 .date-selectors select {
     flex: 1; 
 }
-
 
 form select {
     width: 100%;
@@ -137,7 +140,6 @@ form select {
     background-size: 20px;
     background-color: white;
 }
-
 
 form button {
     width: 100%;
@@ -166,4 +168,32 @@ form button:hover {
 
 .login-link:hover {
     text-decoration: underline;
+}
+
+/* --- CORRECCIÓN FORZADA PARA EL INPUT DE FECHA --- */
+#FechaNacimiento {
+    /* 1. Quitamos el estilo nativo del navegador */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    /* 2. Aplicamos el estilo de píldora manualmente */
+    width: 100%;
+    padding: 15px 20px;
+    border: 1px solid #ccc;
+    border-radius: 50px; 
+    box-sizing: border-box;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #fff;
+    outline: none;
+    color: #555;
+    
+    /* 3. Aseguramos que tenga altura si el navegador lo intenta colapsar */
+    min-height: 50px; 
+}
+
+/* Opcional: Estilo para cuando pasas el mouse o escribes */
+#FechaNacimiento:focus {
+    border-color: #ffdd00; /* Color amarillo al seleccionar */
 }

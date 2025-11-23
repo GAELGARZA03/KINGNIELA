@@ -1,0 +1,21 @@
+# Permitir acceso a archivos subidos
+Options +FollowSymLinks
+Options -Indexes
+
+<FilesMatch "\.(mp3|m4a|webm|ogg|wav)$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Headers "Range"
+    Header set Accept-Ranges "bytes"
+</FilesMatch>
+
+AddType audio/mpeg mp3
+AddType audio/mp4 m4a
+AddType audio/ogg ogg
+AddType audio/webm webm
+AddType audio/wav wav
+
+# Permitir reproducción parcial (scrubbing)
+Header set Accept-Ranges bytes
+
+# Evitar errores de CORS en móviles
+Header always set Access-Control-Allow-Origin "*"

@@ -1,33 +1,27 @@
 <?php
-// registro.php
-require 'php/conexion.php';
-
-// Indicar que la respuesta será JSON (para que JS la entienda)
+// php/register.php (o registro.php, asegúrate que el nombre coincida con lo que tienes)
 header('Content-Type: application/json');
+require 'conexion.php'; // Asumiendo que conexion.php está en la misma carpeta 'php/'
 
-// Verificar que sea una petición POST
+// Verificar que sea POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
     exit;
 }
 
 try {
-    // 1. Recibir datos del formulario
-    // Usamos el operador null coalescing (??) para evitar errores si falta algún campo
-    $nombreReal = $_POST['Nombre'] ?? ''; // No lo guardamos en BD por ahora, pero lo recibimos
+    // 1. Recibir datos
     $usuario    = $_POST['Usuario'] ?? '';
     $correo     = $_POST['Correo'] ?? '';
     $password   = $_POST['Contraseña'] ?? '';
     $genero     = $_POST['Genero'] ?? 'Otro';
     
-    // Construir fecha de nacimiento (YYYY-MM-DD)
-    $dia = $_POST['dia'] ?? '01';
-    $mes = $_POST['mes'] ?? '01';
-    $ano = $_POST['año'] ?? '2000';
-    $fechaNacimiento = "$ano-$mes-$dia";
+    // CAMBIO: Recibir la fecha directamente del input type="date"
+    // El formato que envía el navegador es YYYY-MM-DD, justo lo que MySQL necesita.
+    $fechaNacimiento = $_POST['FechaNacimiento'] ?? null;
 
-    // 2. Validaciones Básicas
-    if (empty($usuario) || empty($correo) || empty($password)) {
+    // 2. Validaciones
+    if (empty($usuario) || empty($correo) || empty($password) || empty($fechaNacimiento)) {
         echo json_encode(['success' => false, 'message' => 'Por favor llena todos los campos obligatorios.']);
         exit;
     }
@@ -37,7 +31,7 @@ try {
         exit;
     }
 
-    // 3. Verificar si el usuario o correo ya existen
+    // 3. Verificar duplicados
     $stmtCheck = $pdo->prepare("SELECT Id_Usuario FROM USUARIO WHERE Correo = ? OR Nombre_Usuario = ?");
     $stmtCheck->execute([$correo, $usuario]);
     
@@ -46,11 +40,10 @@ try {
         exit;
     }
 
-    // 4. Encriptar contraseña (¡Seguridad básica indispensable!)
+    // 4. Encriptar contraseña
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-    // 5. Insertar en la Base de Datos
-    // Nota: 'Preferencias_Encriptacion' es TRUE por defecto en la BD, así que no hace falta enviarlo.
+    // 5. Insertar
     $sql = "INSERT INTO USUARIO (Nombre_Usuario, Fecha_Nacimiento, Genero, Correo, Contrasena) 
             VALUES (?, ?, ?, ?, ?)";
     
@@ -64,7 +57,6 @@ try {
     }
 
 } catch (PDOException $e) {
-    // En producción no mostrarías el error exacto, pero para desarrollo ayuda
     echo json_encode(['success' => false, 'message' => 'Error de servidor: ' . $e->getMessage()]);
 }
 ?>

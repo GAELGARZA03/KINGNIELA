@@ -2,15 +2,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- LÓGICA DE REGISTRO ---
     const registerForm = document.getElementById('registerForm');
-
     if (registerForm) {
         registerForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Evita que la página se recargue
-
-            // Crear un objeto con los datos del formulario
+            e.preventDefault(); 
             const formData = new FormData(registerForm);
 
-            // Enviar los datos a registro.php usando Fetch
             fetch('php/registro.php', {
                 method: 'POST',
                 body: formData
@@ -18,26 +14,48 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message); // Mensaje de éxito
-                    window.location.href = 'Principal.html'; // Redirigir al login
+                    alert(data.message); 
+                    // Opcional: Recargar o cambiar vista para login
+                    window.location.reload(); 
                 } else {
-                    alert("Error: " + data.message); // Mensaje de error
+                    alert("Error: " + data.message); 
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ocurrió un error de conexión.');
-            });
+            .catch(error => console.error('Error:', error));
         });
     }
 
-    // --- LÓGICA DE LOGIN (Placeholder para cuando lo hagamos) ---
+    // --- LÓGICA DE LOGIN (ACTUALIZADA) ---
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            // Aquí pondremos la lógica de login en el siguiente paso
-            alert("Funcionalidad de login pendiente de conectar.");
+            
+            // Obtener valores (ajusta los IDs según tu HTML IniciarSesion.html)
+            const email = document.getElementById('loginIdentifier').value;
+            const password = document.getElementById('loginPassword').value;
+
+            fetch('php/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Guardar usuario en LocalStorage para usarlo en Social.js y Quiniela.js
+                    localStorage.setItem('kingniela_user', JSON.stringify(data.user));
+                    
+                    // Redirigir a la página principal de la app
+                    window.location.href = 'Quiniela.html'; 
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error de conexión al iniciar sesión");
+            });
         });
     }
 });
