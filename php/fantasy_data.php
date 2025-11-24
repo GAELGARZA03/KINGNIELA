@@ -10,6 +10,7 @@ $jornada = $_GET['jornada'] ?? 'Jornada 1';
 if (!$userId || !$idQuiniela) { echo json_encode(['success' => false, 'message' => 'Datos incompletos']); exit; }
 
 try {
+    // 1. Obtener ID de la configuración Fantasy
     $stmtF = $pdo->prepare("SELECT Id_Quiniela_F FROM QUINIELA_F WHERE Id_Quiniela = ?");
     $stmtF->execute([$idQuiniela]);
     $idF = $stmtF->fetchColumn();
@@ -19,7 +20,7 @@ try {
     $fasesExclusivas = ['Jornada 1', 'Jornada 2', 'Jornada 3'];
     $esMercadoExclusivo = in_array($jornada, $fasesExclusivas);
 
-    // Mercado (Igual que antes)
+    // 2. Mercado de Jugadores
     $sqlMarket = "
         SELECT j.Id_Jugador, j.Nombre_Jugador, j.Posicion, j.Costo, j.Foto, e.Nombre_Equipo, e.Escudo
         FROM JUGADOR j
@@ -32,7 +33,7 @@ try {
     $stmtM->execute([$jornada]);
     $todosJugadores = $stmtM->fetchAll(PDO::FETCH_ASSOC);
 
-    // Ocupados
+    // 3. Jugadores Ocupados (Si es exclusivo)
     $ocupadosIds = [];
     if ($esMercadoExclusivo) {
         $stmtOcup = $pdo->prepare("SELECT Id_Jugador FROM SELECCION_JUGADORES WHERE Id_Quiniela_F = ? AND Fase = ? AND Id_Usuario != ?");
@@ -40,10 +41,17 @@ try {
         $ocupadosIds = $stmtOcup->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    // MI EQUIPO + PUNTOS (JOIN CON RENDIMIENTO)
+    // 4. MI EQUIPO + ESTADÍSTICAS PARA PUNTOS
+    // CORRECCIÓN AQUÍ: Usamos 'Tipo_Accion'
     $sqlMyTeam = "
-        SELECT j.Id_Jugador, j.Nombre_Jugador, j.Posicion, j.Costo, j.Foto, e.Nombre_Equipo,
-               r.Calificacion_Final
+        SELECT j.Id_Jugador, j.Nombre_Jugador, j.Posicion, j.Costo, j.Foto, j.Id_Equipo,
+               e.Nombre_Equipo,
+               r.Calificacion_Final,
+               p.Id_Equipo_Local, p.Id_Equipo_Visitante, p.Goles_Local, p.Goles_Visitante, p.Estado as Estado_Partido,
+               (SELECT COUNT(*) FROM ACCION a WHERE a.Id_Jugador = j.Id_Jugador AND a.Id_Partido = p.Id_Partido AND a.Tipo_Accion = 'Gol') as Cant_Goles,
+               (SELECT COUNT(*) FROM ACCION a WHERE a.Id_Jugador = j.Id_Jugador AND a.Id_Partido = p.Id_Partido AND a.Tipo_Accion = 'Asistencia') as Cant_Asist,
+               (SELECT COUNT(*) FROM ACCION a WHERE a.Id_Jugador = j.Id_Jugador AND a.Id_Partido = p.Id_Partido AND a.Tipo_Accion = 'Tarjeta Amarilla') as Cant_Amarillas,
+               (SELECT COUNT(*) FROM ACCION a WHERE a.Id_Jugador = j.Id_Jugador AND a.Id_Partido = p.Id_Partido AND a.Tipo_Accion = 'Tarjeta Roja') as Cant_Rojas
         FROM SELECCION_JUGADORES s
         JOIN JUGADOR j ON s.Id_Jugador = j.Id_Jugador
         JOIN EQUIPO e ON j.Id_Equipo = e.Id_Equipo
@@ -58,16 +66,61 @@ try {
     $gastoActual = 0;
     $puntosTotales = 0;
 
-    // Procesar Puntos
+    // 5. CÁLCULO DE PUNTOS
     foreach ($miEquipo as &$jug) {
         $gastoActual += $jug['Costo'];
         
-        // CALCULO DE PUNTOS: (Calificacion - 6)
-        // Si no ha jugado (null), es 0.
-        if (isset($jug['Calificacion_Final'])) {
-            $pts = round($jug['Calificacion_Final'] - 6);
-            $jug['Puntos'] = $pts; // Puede ser negativo
-            $puntosTotales += $pts;
+        // Solo calculamos si hay datos de rendimiento o el partido terminó
+        if (isset($jug['Calificacion_Final']) || (isset($jug['Estado_Partido']) && $jug['Estado_Partido'] == 'finalizado')) {
+            $pts = 0;
+            $pos = $jug['Posicion']; 
+
+            // A) Rendimiento Base
+            $pts += floatval($jug['Calificacion_Final']); 
+
+            // B) Goles
+            $multiGol = 0;
+            if ($pos == 'DEL') $multiGol = 4;
+            elseif ($pos == 'MED') $multiGol = 5;
+            else $multiGol = 6; // DEF y POR
+            $pts += ($jug['Cant_Goles'] * $multiGol);
+
+            // C) Asistencias
+            $multiAsist = 0;
+            if ($pos == 'DEL') $multiAsist = 1;
+            elseif ($pos == 'MED') $multiAsist = 3;
+            else $multiAsist = 2; // DEF y POR
+            $pts += ($jug['Cant_Asist'] * $multiAsist);
+
+            // D) Castigos
+            $pts += ($jug['Cant_Amarillas'] * -4);
+            $pts += ($jug['Cant_Rojas'] * -10);
+
+            // E) Resultado del Equipo y Portería a Cero
+            $esLocal = ($jug['Id_Equipo'] == $jug['Id_Equipo_Local']);
+            $golesFavor = $esLocal ? $jug['Goles_Local'] : $jug['Goles_Visitante'];
+            $golesContra = $esLocal ? $jug['Goles_Visitante'] : $jug['Goles_Local'];
+            
+            $diferencia = $golesFavor - $golesContra;
+
+            // Victoria / Derrota
+            if ($diferencia > 0) {
+                if ($diferencia >= 2) $pts += 2; 
+                else $pts += 1; 
+            } elseif ($diferencia < 0) {
+                if ($diferencia <= -2) $pts += -5; 
+                else $pts += -2; 
+            }
+
+            // Portería a Cero 
+            if (($pos == 'DEF' || $pos == 'POR') && $golesContra == 0) {
+                if ($pos == 'DEF') $pts += 3;
+                if ($pos == 'POR') $pts += 5;
+            }
+
+            $jug['Puntos'] = round($pts);
+            $puntosTotales += $jug['Puntos'];
+
         } else {
             $jug['Puntos'] = null; // Aún no juega
         }
@@ -88,7 +141,7 @@ try {
         'mercado' => $mercadoFinal,
         'mi_equipo' => $miEquipo,
         'presupuesto' => $presupuestoRestante,
-        'puntos_totales' => $puntosTotales, // Nuevo dato
+        'puntos_totales' => $puntosTotales,
         'es_exclusivo' => $esMercadoExclusivo
     ]);
 

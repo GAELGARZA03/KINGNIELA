@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Conexión Socket (Reutilizar la global si existe)
     const serverUrl = window.SERVER_URL || 'http://localhost:3000';
     const socket = window.socket || io(serverUrl);
 
@@ -54,8 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Variables FANTASY
     let fantasyBudget = 100.0;
+    let fantasyPointsTotal = 0; // Nueva variable para puntos
     let myFantasyTeam = { POR:[], DEF:[], MED:[], DEL:[] };
-    const FANTASY_LIMITS = { POR:1, DEF:4, MED:3, DEL:3 }; // Formación 4-3-3
+    const FANTASY_LIMITS = { POR:1, DEF:4, MED:3, DEL:3 }; 
 
     // --- SOCKET LISTENERS ---
     socket.on('newGroupMessage', (msg) => {
@@ -110,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- UNIRSE A QUINIELA ---
     if(btnJoinGroup) {
         btnJoinGroup.addEventListener('click', () => {
             const codigo = inputJoinCode.value.trim();
@@ -133,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- VISTA DE GRUPO ---
     function loadGroupView(quiniela) {
         if (quinielaActiva) socket.emit('leave_group', quinielaActiva.Id_Quiniela);
         quinielaActiva = quiniela;
@@ -149,19 +147,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         jornadaSelect.value = 'Jornada 1'; 
         
-        // Cambiar nombre de pestaña según tipo
         if (quiniela.Tipo_Quiniela === 'fantasy') {
             document.querySelector('[data-tab="tab-kingnielar"]').textContent = "Mi Equipo";
+            if(btnGuardarPredicciones) btnGuardarPredicciones.style.display = 'none';
         } else {
             document.querySelector('[data-tab="tab-kingnielar"]').textContent = "Kingnielar";
+            if(btnGuardarPredicciones) btnGuardarPredicciones.style.display = 'inline-block';
         }
         
         clickTab('tab-kingnielar');
     }
 
-    // --- RENDERIZADO DE TABS ---
     function renderKingnielarTab(quiniela) {
-        // Llenar select de jornadas si está vacío
         if(jornadaSelect.innerHTML.trim() === "") {
             ['Jornada 1', 'Jornada 2', 'Jornada 3', 'Dieciseisavos de final', 'Octavos de final', 'Cuartos de final', 'Semifinal', 'Final'].forEach(j => {
                 const opt = document.createElement('option'); opt.value = j; opt.textContent = j;
@@ -169,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Asignar evento onchange
         jornadaSelect.onchange = () => {
             if (quiniela.Tipo_Quiniela === 'fantasy') loadFantasyData(quiniela.Id_Quiniela, jornadaSelect.value);
             else cargarPartidos(quiniela.Id_Quiniela, jornadaSelect.value);
@@ -177,13 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if(!document.getElementById('tab-clasificacion').classList.contains('hidden')) renderClasificacionTab();
         };
 
-        // Cargar contenido inicial
         if (quiniela.Tipo_Quiniela === 'fantasy') loadFantasyData(quiniela.Id_Quiniela, jornadaSelect.value || 'Jornada 1');
         else cargarPartidos(quiniela.Id_Quiniela, jornadaSelect.value || 'Jornada 1');
     }
 
     // ==========================================================
-    // LÓGICA FANTASY
+    // LÓGICA FANTASY (CORREGIDA)
     // ==========================================================
     function loadFantasyData(idQuiniela, jornada) {
         kingnielarContentArea.innerHTML = "<p style='color:white;text-align:center;'>Cargando mercado...</p>";
@@ -193,11 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (!data.success) { kingnielarContentArea.innerHTML = `<p style='color:white;text-align:center;'>${data.message}</p>`; return; }
 
-            // Resetear estado local
             myFantasyTeam = { POR:[], DEF:[], MED:[], DEL:[] };
             fantasyBudget = parseFloat(data.presupuesto);
+            fantasyPointsTotal = parseFloat(data.puntos_totales || 0);
 
-            // Organizar mi equipo existente
             data.mi_equipo.forEach(p => {
                 if (myFantasyTeam[p.Posicion]) myFantasyTeam[p.Posicion].push(p);
             });
@@ -210,11 +204,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const budgetColor = fantasyBudget >= 0 ? '#ffdd00' : '#ff4d4d';
         const exclusiveBadge = isExclusive ? '<span style="background:#ff4d4d; padding:2px 5px; border-radius:4px; font-size:10px;">EXCLUSIVO</span>' : '<span style="background:#00ff26; color:black; padding:2px 5px; border-radius:4px; font-size:10px;">LIBRE</span>';
 
+        // Color para los puntos totales
+        let ptsColor = '#ccc';
+        if (fantasyPointsTotal > 0) ptsColor = '#00ff26';
+        else if (fantasyPointsTotal < 0) ptsColor = '#ff4d4d';
+
         let html = `
             <div class="fantasy-header" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-bottom:15px;">
-                <div style="text-align:left;">
-                    <div style="font-size:12px; color:#ccc;">Presupuesto</div>
-                    <div style="font-size:24px; font-weight:bold; color:${budgetColor};">$${fantasyBudget.toFixed(1)}M</div>
+                <div style="display:flex; gap:20px; text-align:left;">
+                    <div>
+                        <div style="font-size:12px; color:#ccc;">Presupuesto</div>
+                        <div class="budget-display" style="font-size:20px; font-weight:bold; color:${budgetColor};">$${fantasyBudget.toFixed(1)}M</div>
+                    </div>
+                    <div style="border-left: 1px solid rgba(255,255,255,0.2); padding-left: 20px;">
+                        <div style="font-size:12px; color:#ccc;">Puntos Jornada</div>
+                        <div style="font-size:20px; font-weight:bold; color:${ptsColor};">${fantasyPointsTotal} pts</div>
+                    </div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:12px; color:#ccc;">Mercado ${exclusiveBadge}</div>
@@ -242,14 +247,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         kingnielarContentArea.innerHTML = html;
 
-        // Guardar mercado globalmente para filtrar
         window.currentMarket = marketPlayers;
         filterMarket('ALL'); 
         updateFieldVisuals();
     }
 
     function renderFieldSlots() {
-        // Coordenadas CSS para 4-3-3
         const slots = [
             {pos:'POR', t:'85%', l:'50%'},
             {pos:'DEF', t:'65%', l:'20%'}, {pos:'DEF', t:'65%', l:'40%'}, {pos:'DEF', t:'65%', l:'60%'}, {pos:'DEF', t:'65%', l:'80%'},
@@ -266,7 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    // --- FUNCIONES GLOBALES FANTASY (Para onclicks) ---
     window.filterMarket = function(pos) {
         const container = document.getElementById('market-list');
         container.innerHTML = "";
@@ -298,8 +300,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- ARREGLADO: Sincronización correcta entre Mercado y Equipo ---
     window.buyPlayer = function(id) {
-        const player = window.currentMarket.find(p => p.Id_Jugador == id);
+        // Buscar en el mercado
+        const player = window.currentMarket.find(p => parseInt(p.Id_Jugador) === parseInt(id));
         if (!player) return;
 
         if (fantasyBudget - player.Costo < 0) return alert("Presupuesto insuficiente");
@@ -307,61 +311,93 @@ document.addEventListener('DOMContentLoaded', () => {
             return alert(`Cupo de ${player.Posicion} lleno. Vende a uno primero.`);
         }
 
+        // Agregar a mi equipo local
         myFantasyTeam[player.Posicion].push(player);
         fantasyBudget -= parseFloat(player.Costo);
+        
+        // Marcar como propio en el objeto del mercado
         player.lo_tengo = true; 
+        
         updateUI();
     }
 
-    window.removePlayerFromSlot = function(pos, index) {
-        // Click en slot vacío no hace nada
-    }
-    
     window.sellPlayer = function(id) {
         let foundPos = null;
+        
+        // Buscar y eliminar de mi equipo
         Object.keys(myFantasyTeam).forEach(pos => {
-            const idx = myFantasyTeam[pos].findIndex(p => p.Id_Jugador == id);
+            const idx = myFantasyTeam[pos].findIndex(p => parseInt(p.Id_Jugador) === parseInt(id));
             if (idx !== -1) {
                 const p = myFantasyTeam[pos][idx];
                 fantasyBudget += parseFloat(p.Costo);
-                p.lo_tengo = false;
                 myFantasyTeam[pos].splice(idx, 1);
                 foundPos = pos;
             }
         });
+
+        // Desmarcar propiedad en el mercado
+        const marketPlayer = window.currentMarket.find(p => parseInt(p.Id_Jugador) === parseInt(id));
+        if(marketPlayer) marketPlayer.lo_tengo = false;
+
         if (foundPos) updateUI();
     }
 
     function updateUI() {
-        const budgetDiv = document.querySelector('.fantasy-header div:first-child div:last-child');
+        const budgetDiv = document.querySelector('.budget-display');
         if(budgetDiv) {
             budgetDiv.innerText = `$${fantasyBudget.toFixed(1)}M`;
             budgetDiv.style.color = fantasyBudget >= 0 ? '#ffdd00' : 'red';
         }
         updateFieldVisuals();
-        filterMarket('ALL'); 
+        
+        // Refrescar filtro actual para actualizar botones (+ / EN EQUIPO)
+        const activeFilter = document.querySelector('.market-filters button:focus')?.innerText || 'Todo';
+        const mapFilter = {'Todo':'ALL', 'POR':'POR', 'DEF':'DEF', 'MED':'MED', 'DEL':'DEL'};
+        filterMarket(mapFilter[activeFilter] || 'ALL'); 
     }
 
     function updateFieldVisuals() {
+        // Resetear slots
         document.querySelectorAll('.player-slot').forEach(s => {
             const pos = s.id.split('-')[1];
-            s.innerHTML = `<span style="font-size:10px; font-weight:bold;">${pos}</span>`;
+            s.innerHTML = `<span style="font-size:10px; font-weight:bold; color:white;">${pos}</span>`;
             s.style.background = "rgba(0,0,0,0.5)";
-            s.style.border = "2px solid white";
+            s.style.border = "2px solid rgba(255,255,255,0.5)";
             s.onclick = null; 
+            s.classList.remove('filled');
         });
 
-        const mapBase = { POR:0, DEF:1, MED:5, DEL:8 }; // Índices base de los slots en el HTML
+        const mapBase = { POR:0, DEF:1, MED:5, DEL:8 };
 
         Object.keys(myFantasyTeam).forEach(pos => {
             myFantasyTeam[pos].forEach((p, i) => {
                 const slotIndex = mapBase[pos] + i;
                 const slot = document.querySelectorAll('.player-slot')[slotIndex];
+                
                 if (slot) {
-                    slot.innerHTML = `<img src="${p.Foto || 'Imagenes/I_Perfil.png'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
-                                      <div style="position:absolute; bottom:-15px; background:black; font-size:9px; padding:1px 4px; border-radius:4px; white-space:nowrap;">${p.Nombre_Jugador.split(' ').pop()}</div>`;
-                    slot.style.background = "#1a24ad";
+                    const imgSrc = p.Foto ? p.Foto : 'Imagenes/Jugadores/default.webp';
+                    
+                    let badgeHtml = '';
+                    if (p.Puntos !== null && p.Puntos !== undefined) {
+                        const pts = parseInt(p.Puntos);
+                        let colorClass = 'points-zero';
+                        if(pts > 0) colorClass = 'points-positive';
+                        if(pts < 0) colorClass = 'points-negative';
+                        badgeHtml = `<div class="player-points-badge ${colorClass}">${pts}</div>`;
+                    }
+
+                    const nameParts = p.Nombre_Jugador.split(' ');
+                    const shortName = nameParts.length > 1 ? nameParts[1] : nameParts[0];
+
+                    slot.innerHTML = `
+                        <img src="${imgSrc}" class="player-img" onerror="this.src='Imagenes/Jugadores/default.webp'">
+                        <div class="player-name-label">${shortName}</div>
+                        ${badgeHtml}
+                    `;
+                    
+                    slot.style.background = "#001f5c";
                     slot.style.border = "2px solid #ffdd00";
+                    slot.classList.add('filled');
                     slot.onclick = () => window.sellPlayer(p.Id_Jugador); 
                 }
             });
@@ -385,15 +421,14 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(r => r.json())
         .then(res => {
-            if(res.success) alert("¡Equipo guardado!");
+            if(res.success) {
+                alert("¡Equipo guardado!");
+                loadFantasyData(quinielaActiva.Id_Quiniela, jornadaSelect.value);
+            }
             else alert("Error: " + res.message);
         });
     }
 
-
-    // ==========================================================
-    // LÓGICA KINGNIELA (Predicciones)
-    // ==========================================================
     function cargarPartidos(idQuiniela, jornada) {
         kingnielarContentArea.innerHTML = "<p style='color:white; text-align:center;'>Cargando...</p>";
         fetch(`php/quiniela_partidos.php?id_quiniela=${idQuiniela}&jornada=${jornada}`)
@@ -450,7 +485,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- HELPERS LEYENDA ---
     window.selectPred = function(btn, tipo) { 
         const container = btn.parentElement; 
         Array.from(container.children).forEach(b => b.classList.remove('selected')); 
@@ -472,7 +506,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const nombreJugador = select.options[select.selectedIndex].text; 
         if (!idJugador) return; 
 
-        // Validación duplicados
         if (listContainer.querySelector(`.scorer-tag[data-id="${idJugador}"]`)) return alert("Este jugador ya fue seleccionado.");
 
         createScorerTag(listContainer, idJugador, nombreJugador, false); 
@@ -509,7 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }); 
     }
 
-    // --- GUARDAR ---
     if(btnGuardarPredicciones) { 
         btnGuardarPredicciones.addEventListener('click', () => { 
             if(!quinielaActiva) return; 
@@ -548,11 +580,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }); 
     }
 
-    // --- CLASIFICACIÓN ---
     function renderClasificacionTab() {
         if(!quinielaActiva) return;
         const jornadaActual = jornadaSelect.value || 'Jornada 1';
-        fetch(`php/quiniela_ranking.php?id_quiniela=${quinielaActiva.Id_Quiniela}&jornada=${jornadaActual}`).then(r => r.json()).then(data => {
+        
+        let url = `php/quiniela_ranking.php?id_quiniela=${quinielaActiva.Id_Quiniela}&jornada=${jornadaActual}`;
+        if (quinielaActiva.Tipo_Quiniela === 'fantasy') {
+            url = `php/ranking_fantasy.php?id_quiniela=${quinielaActiva.Id_Quiniela}&jornada=${jornadaActual}`;
+        }
+
+        fetch(url).then(r => r.json()).then(data => {
             if(data.success) {
                 document.getElementById('total-participants').textContent = data.ranking.length;
                 const headersHtml = `<tr><th>Pos</th><th>Usuario</th><th>Total</th><th>J1</th><th>J2</th><th>J3</th><th>Final</th></tr>`;
@@ -570,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- CHAT GRUPAL ---
     function loadGroupChat() { 
         if(!quinielaActiva) return; 
         groupChatBody.innerHTML = "<p style='text-align:center;color:#ccc;'>Cargando...</p>"; 
@@ -607,7 +643,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('php/chat_grupo.php', { method: 'POST', body: fd }).then(r => r.json()).then(res => { if(res.success) groupChatInput.value = ""; }); 
     }
 
-    // --- CREAR Y GESTIONAR ---
     if(btnShowCreate) btnShowCreate.addEventListener('click', () => { quinielaListView.classList.add('hidden'); createQuinielaView.classList.remove('hidden'); amigosSeleccionados = []; inpNombre.value = ""; toggleDifficulty(); });
     if(btnCancelCreate) btnCancelCreate.addEventListener('click', () => { createQuinielaView.classList.add('hidden'); quinielaListView.classList.remove('hidden'); });
     function toggleDifficulty() { if(radioKingniela.checked) difficultySection.classList.remove('hidden'); else difficultySection.classList.add('hidden'); }

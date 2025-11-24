@@ -8,13 +8,12 @@ $input = json_decode(file_get_contents('php://input'), true);
 
 $idQuiniela = $input['id_quiniela'] ?? 0;
 $jornada = $input['jornada'] ?? '';
-$jugadoresIds = $input['jugadores'] ?? []; // Array de IDs
+$jugadoresIds = $input['jugadores'] ?? []; 
 
 if (!$userId || !$idQuiniela || empty($jornada)) {
     echo json_encode(['success' => false, 'message' => 'Datos incompletos']); exit;
 }
 
-// Validación estricta de 11 jugadores
 if (count($jugadoresIds) !== 11) {
     echo json_encode(['success' => false, 'message' => 'Debes seleccionar exactamente 11 jugadores.']); exit;
 }
@@ -30,8 +29,10 @@ try {
     // 2. Validar Mercado Exclusivo
     $fasesExclusivas = ['Jornada 1', 'Jornada 2', 'Jornada 3'];
     if (in_array($jornada, $fasesExclusivas)) {
-        // Verificar si alguno ya está ocupado por OTRO usuario (Race Condition)
+        // Verificar ocupados por OTRO usuario (Id_Usuario != $userId)
         $placeholders = implode(',', array_fill(0, count($jugadoresIds), '?'));
+        
+        // La clave es: Id_Usuario != ? (Si soy yo, no cuenta como ocupado prohibido)
         $sqlCheck = "SELECT COUNT(*) FROM SELECCION_JUGADORES 
                      WHERE Id_Quiniela_F = ? AND Fase = ? AND Id_Usuario != ? 
                      AND Id_Jugador IN ($placeholders)";
@@ -41,7 +42,7 @@ try {
         $stmtCheck->execute($params);
         
         if ($stmtCheck->fetchColumn() > 0) {
-            echo json_encode(['success' => false, 'message' => 'Uno o más jugadores seleccionados ya fueron fichados por otro usuario. Recarga la página.']);
+            echo json_encode(['success' => false, 'message' => 'Error: Uno o más jugadores ya pertenecen a otro usuario.']);
             $pdo->rollBack(); exit;
         }
     }
@@ -57,7 +58,7 @@ try {
         $pdo->rollBack(); exit;
     }
 
-    // 4. Borrar selección anterior de esta jornada
+    // 4. Modificación: Borrar selección anterior para actualizarla
     $stmtDel = $pdo->prepare("DELETE FROM SELECCION_JUGADORES WHERE Id_Quiniela_F = ? AND Fase = ? AND Id_Usuario = ?");
     $stmtDel->execute([$idF, $jornada, $userId]);
 
