@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const serverUrl = window.SERVER_URL || 'http://localhost:3000';
+    const serverUrl = window.SERVER_URL || 'http://192.168.1.13:3000';
     const socket = window.socket || io(serverUrl);
 
     // --- REFERENCIAS DOM ---
