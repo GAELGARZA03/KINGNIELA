@@ -1,0 +1,27 @@
+--- Intento de Actualización: 2025-11-24 20:24:12 ---
+POST Data: Array
+(
+    [id_quiniela] => 5
+    [nombre] => Fantasy
+)
+FILES Data: Array
+(
+)
+--- Intento de Actualización: 2025-11-24 20:29:03 ---
+POST Data: Array
+(
+    [id_quiniela] => 5
+    [nombre] => Fantasy
+)
+FILES Data: Array
+(
+)
+--- Intento de Actualización: 2025-11-24 20:31:41 ---
+POST Data: Array
+(
+    [id_quiniela] => 5
+    [nombre] => Fantasy
+)
+FILES Data: Array
+(
+)

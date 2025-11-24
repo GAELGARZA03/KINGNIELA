@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupView = document.getElementById('quiniela-group-view');
     const sidebarList = document.getElementById('sidebar-quinielas-list');
     
+    // Elementos de Creación
     const btnShowCreate = document.getElementById('btn-show-create');
     const btnCancelCreate = document.getElementById('btn-cancel-create');
     const btnCreateFinal = document.getElementById('btn-create-final');
@@ -24,28 +25,79 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnFinish = document.getElementById('btn-finish');
     const btnJoinGroup = document.getElementById('btn-join-group');
     const inputJoinCode = document.getElementById('join-code-input');
+    const generatedCodeDisplay = document.getElementById('generated-code');
+    const successModal = document.getElementById('successModal');
     
+    // Elementos de Grupo
+    const btnConfigGroup = document.querySelector('.btn-config'); 
     const btnGuardarPredicciones = document.querySelector('#tab-kingnielar .btn-primary');
     const groupChatBody = document.getElementById('group-chat-messages');
     const groupChatInput = document.getElementById('group-message-input');
     const btnSendGroup = document.querySelector('.chat-input-wrapper .send-btn');
+    const jornadaSelect = document.getElementById('jornada-select');
+    const kingnielarContentArea = document.getElementById('kingnielar-content-area');
+    
+    // Tabs
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
 
+    // Modales
     const membersModal = document.getElementById('membersModal');
     const membersListContainer = document.getElementById('members-list-container');
     const closeMembers = document.getElementById('close-members');
-    const successModal = document.getElementById('successModal');
-    const generatedCodeDisplay = document.getElementById('generated-code');
-    
+
+    // MODAL DE CONFIGURACIÓN
+    let configModal = document.getElementById('configModal');
+    if (!configModal) {
+        const modalHTML = `
+        <div id="configModal" class="modal hidden">
+            <div class="modal-content" style="width: 450px;">
+                <span class="cerrar-modal" id="close-config">×</span>
+                <h2>Configuración de Grupo</h2>
+                
+                <div class="config-section">
+                    <label class="section-label">Nombre de la Quiniela</label>
+                    <input type="text" id="config-group-name" class="input-full" placeholder="Nombre...">
+                </div>
+
+                <div class="config-section">
+                    <label class="section-label">Foto del Grupo</label>
+                    <div style="display:flex; align-items:center; gap:15px; margin-top:10px;">
+                        <img id="config-group-preview" src="Imagenes/mundial_2026.png" style="width:60px; height:60px; border-radius:10px; object-fit:cover; border:2px solid #ffdd00;">
+                        <input type="file" id="config-group-file" accept="image/*" style="display:none;">
+                        <button class="btn-secondary" onclick="document.getElementById('config-group-file').click()">Cambiar Foto</button>
+                    </div>
+                </div>
+
+                <div class="config-section">
+                    <label class="section-label">Gestionar Miembros</label>
+                    <div id="config-members-list" class="members-manage-list"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-cancel" id="btn-cancel-config">Cancelar</button>
+                    <button class="btn-primary" id="btn-save-config">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        configModal = document.getElementById('configModal');
+    }
+
+    // Referencias del Modal Config
+    const inpConfigName = document.getElementById('config-group-name');
+    const imgConfigPreview = document.getElementById('config-group-preview');
+    const inpConfigFile = document.getElementById('config-group-file');
+    const listConfigMembers = document.getElementById('config-members-list');
+    const btnSaveConfig = document.getElementById('btn-save-config');
+    const btnCancelConfig = document.getElementById('btn-cancel-config');
+    const closeConfig = document.getElementById('close-config');
+
     const inpNombre = document.querySelector('#form-create-quiniela input[type="text"]');
     const radioKingniela = document.getElementById('tipo-kingniela');
     const radioClasico = document.getElementById('tipo-clasico');
     const difficultySection = document.getElementById('difficulty-section');
     const selectDifficulty = document.getElementById('select-difficulty');
-
-    const kingnielarContentArea = document.getElementById('kingnielar-content-area');
-    const jornadaSelect = document.getElementById('jornada-select');
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
 
     let amigosSeleccionados = [];
     let misQuinielas = [];
@@ -55,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let fantasyBudget = 100.0;
     let fantasyPointsTotal = 0; 
     let myFantasyTeam = { POR:[], DEF:[], MED:[], DEL:[] };
-    let isFantasyLocked = false; // Nueva variable de control
+    let isFantasyLocked = false;
     const FANTASY_LIMITS = { POR:1, DEF:4, MED:3, DEL:3 }; 
 
     // --- SOCKET LISTENERS ---
@@ -98,18 +150,148 @@ document.addEventListener('DOMContentLoaded', () => {
             misQuinielas.forEach(q => {
                 const li = document.createElement('li'); 
                 li.className = 'quiniela-sidebar-item';
-                li.textContent = q.Nombre_Quiniela.substring(0, 2).toUpperCase();
-                li.title = q.Nombre_Quiniela;
-                li.style.backgroundColor = `hsl(${Math.floor(Math.random()*360)}, 70%, 80%)`;
+                
+                if (q.Foto_Grupo) {
+                    li.innerHTML = `<img src="${q.Foto_Grupo}" title="${q.Nombre_Quiniela}" style="width:100%; height:100%; border-radius:10px; object-fit:cover;">`;
+                    li.style.overflow = 'hidden';
+                    li.style.padding = '0';
+                    li.style.border = '2px solid transparent';
+                } else {
+                    li.textContent = q.Nombre_Quiniela.substring(0, 2).toUpperCase();
+                    li.title = q.Nombre_Quiniela;
+                    li.style.backgroundColor = `hsl(${Math.floor(Math.random()*360)}, 70%, 80%)`;
+                }
+
                 li.addEventListener('click', () => {
-                    document.querySelectorAll('.quiniela-sidebar-item').forEach(i => i.classList.remove('active-group'));
+                    document.querySelectorAll('.quiniela-sidebar-item').forEach(i => {
+                        i.classList.remove('active-group');
+                        i.style.borderColor = 'transparent';
+                    });
                     li.classList.add('active-group'); 
+                    if(q.Foto_Grupo) li.style.borderColor = '#ffdd00';
                     loadGroupView(q);
                 });
                 sidebarList.appendChild(li);
             });
         }
     }
+
+    // --- CONFIGURACIÓN DE GRUPO ---
+    if(btnConfigGroup) {
+        btnConfigGroup.addEventListener('click', () => {
+            if(!quinielaActiva) return alert("Selecciona una quiniela primero.");
+            
+            // Validar ID antes de abrir
+            if(!quinielaActiva.Id_Quiniela) return alert("Error: Objeto quiniela sin ID.");
+
+            inpConfigName.value = quinielaActiva.Nombre_Quiniela || '';
+            imgConfigPreview.src = quinielaActiva.Foto_Grupo || 'Imagenes/mundial_2026.png';
+            inpConfigFile.value = ""; 
+
+            listConfigMembers.innerHTML = "<p style='text-align:center; color:#ccc;'>Cargando miembros...</p>";
+            
+            fetch(`php/obtener_miembros.php?id_quiniela=${quinielaActiva.Id_Quiniela}`)
+                .then(r => r.json())
+                .then(res => {
+                    listConfigMembers.innerHTML = "";
+                    if(res.success) {
+                        if(res.miembros.length === 0) {
+                            listConfigMembers.innerHTML = "<p style='text-align:center; color:#ccc; font-size:12px;'>No se encontraron miembros en la BD.</p>";
+                        } else {
+                            res.miembros.forEach(m => {
+                                const isMe = m.es_propio;
+                                const deleteBtn = isMe ? '' : `<button class="btn-remove-member" onclick="removeMember(${m.Id_Usuario})">Eliminar</button>`;
+                                const item = document.createElement('div');
+                                item.className = 'member-manage-item';
+                                item.innerHTML = `
+                                    <div class="member-info-block">
+                                        <img src="${m.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic">
+                                        <span>${m.Nombre_Usuario} ${isMe ? '(Tú)' : ''}</span>
+                                    </div>
+                                    ${deleteBtn}
+                                `;
+                                listConfigMembers.appendChild(item);
+                            });
+                        }
+                    } else {
+                        listConfigMembers.innerHTML = `<p style='color:red; text-align:center;'>Error: ${res.message}</p>`;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    listConfigMembers.innerHTML = "<p style='color:red; text-align:center;'>Error de conexión.</p>";
+                });
+
+            configModal.classList.remove('hidden');
+        });
+    }
+
+    if(inpConfigFile) {
+        inpConfigFile.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => imgConfigPreview.src = e.target.result;
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    if(btnSaveConfig) {
+        btnSaveConfig.addEventListener('click', () => {
+            const newName = inpConfigName.value.trim();
+            if(!newName) return alert("El nombre no puede estar vacío");
+
+            const formData = new FormData();
+            formData.append('id_quiniela', quinielaActiva.Id_Quiniela);
+            formData.append('nombre', newName);
+            if(inpConfigFile.files[0]) {
+                formData.append('foto_grupo', inpConfigFile.files[0]);
+            }
+
+            fetch('php/actualizar_grupo.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(res => {
+                if(res.success) {
+                    alert("Grupo actualizado. Filas afectadas: " + (res.filas_afectadas !== undefined ? res.filas_afectadas : 'N/A'));
+                    configModal.classList.add('hidden');
+                    
+                    // Actualizar UI local
+                    quinielaActiva.Nombre_Quiniela = newName;
+                    if(res.foto) quinielaActiva.Foto_Grupo = res.foto;
+                    
+                    document.getElementById('group-header-name').textContent = newName;
+                    const headerImg = document.getElementById('group-header-img');
+                    if(headerImg && res.foto) headerImg.src = res.foto;
+                    
+                    cargarMisQuinielas();
+                } else {
+                    alert("Error del servidor: " + res.message);
+                }
+            })
+            .catch(e => alert("Error de red al guardar."));
+        });
+    }
+
+    window.removeMember = function(idUsuario) {
+        if(!confirm("¿Seguro que deseas eliminar a este miembro?")) return;
+        fetch('php/eliminar_miembro.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id_quiniela: quinielaActiva.Id_Quiniela, id_usuario: idUsuario })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if(res.success) {
+                // Recargar lista refrescando el modal
+                // (Disparamos el evento click para recargar la lista)
+                const event = new Event('click');
+                btnConfigGroup.dispatchEvent(event);
+            } else alert("Error: " + res.message);
+        });
+    }
+
+    if(closeConfig) closeConfig.onclick = () => configModal.classList.add('hidden');
+    if(btnCancelConfig) btnCancelConfig.onclick = () => configModal.classList.add('hidden');
 
     if(btnJoinGroup) {
         btnJoinGroup.addEventListener('click', () => {
@@ -192,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             myFantasyTeam = { POR:[], DEF:[], MED:[], DEL:[] };
             fantasyBudget = parseFloat(data.presupuesto);
             fantasyPointsTotal = parseFloat(data.puntos_totales || 0);
-            isFantasyLocked = data.locked; // Estado de bloqueo desde backend
+            isFantasyLocked = data.locked; 
 
             data.mi_equipo.forEach(p => {
                 if (myFantasyTeam[p.Posicion]) myFantasyTeam[p.Posicion].push(p);
@@ -210,11 +392,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fantasyPointsTotal > 0) ptsColor = '#00ff26';
         else if (fantasyPointsTotal < 0) ptsColor = '#ff4d4d';
 
-        // Botón de guardar solo si NO está bloqueado
         const saveBtn = isFantasyLocked 
             ? '<span style="color:#ff4d4d; font-weight:bold; font-size:12px; border:1px solid #ff4d4d; padding:5px 10px; border-radius:5px;">JORNADA CERRADA</span>' 
             : `<button class="btn-primary" onclick="saveFantasyTeam()" style="padding:5px 15px; font-size:12px; margin-top:5px;">Guardar Equipo</button>`;
 
+        // CORRECCIÓN IMAGEN 404: Se usa 'mundial_2026.png' que sí existe en lugar de 'image_b0963d.jpg'
         let html = `
             <div class="fantasy-header" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-bottom:15px;">
                 <div style="display:flex; gap:20px; text-align:left;">
@@ -234,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <div class="fantasy-container" style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px; height:550px;">
-                <div class="fantasy-field-area" style="position:relative; background-image:url('Imagenes/image_b0963d.jpg'); background-size:cover; border-radius:15px; border:2px solid #ffdd00;">
+                <div class="fantasy-field-area" style="position:relative; background-image:url('Imagenes/cancha.jpg'); background-size:cover; border-radius:15px; border:2px solid #ffdd00;">
                     ${renderFieldSlots()}
                 </div>
 
@@ -259,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
         kingnielarContentArea.innerHTML = html;
 
         window.currentMarket = marketPlayers;
-        window.currentPosFilter = 'ALL'; // Guardar filtro actual
+        window.currentPosFilter = 'ALL'; 
         filterMarket('ALL'); 
         updateFieldVisuals();
     }
@@ -282,7 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.filterMarket = function(pos) {
-        // Si pos es null, usar el último filtro activo
         if (pos === null) pos = window.currentPosFilter;
         else window.currentPosFilter = pos;
 
@@ -303,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let btnHtml = '';
             if (isOwnedByMe) btnHtml = `<span style="color:#00ff26; font-size:10px;">EN EQUIPO</span>`;
             else if (isTaken) btnHtml = `<span style="color:#ff4d4d; font-size:16px;">🔒</span>`; 
-            else if (isFantasyLocked) btnHtml = `<span style="color:#888; font-size:12px;">🚫</span>`; // Bloqueado
+            else if (isFantasyLocked) btnHtml = `<span style="color:#888; font-size:12px;">🚫</span>`;
             else btnHtml = `<button style="background:#ffdd00; border:none; border-radius:50%; width:20px; height:20px; font-weight:bold; cursor:pointer;" onclick="buyPlayer(${p.Id_Jugador})">+</button>`;
 
             const div = document.createElement('div');
@@ -367,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
             budgetDiv.style.color = fantasyBudget >= 0 ? '#ffdd00' : 'red';
         }
         updateFieldVisuals();
-        filterMarket(null); // Refrescar con filtro actual
+        filterMarket(null);
     }
 
     function updateFieldVisuals() {
@@ -412,7 +593,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     slot.style.border = "2px solid #ffdd00";
                     slot.classList.add('filled');
                     
-                    // Solo permitir vender si no está bloqueado
                     if (!isFantasyLocked) {
                         slot.onclick = () => window.sellPlayer(p.Id_Jugador); 
                     }
@@ -448,7 +628,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ... (El resto de funciones cargarPartidos, selectPred, etc. se mantienen igual) ...
     function cargarPartidos(idQuiniela, jornada) {
         kingnielarContentArea.innerHTML = "<p style='color:white; text-align:center;'>Cargando...</p>";
         fetch(`php/quiniela_partidos.php?id_quiniela=${idQuiniela}&jornada=${jornada}`)
