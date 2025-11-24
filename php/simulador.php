@@ -79,7 +79,7 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
     $stmtJug->execute([$idEquipo]);
     $jugadores = $stmtJug->fetchAll(PDO::FETCH_ASSOC);
 
-    if (empty($jugadores)) { // Fantasmas si faltan datos
+    if (empty($jugadores)) { 
         $jugadores = [];
         for($i=1; $i<=11; $i++) {
             $pos = ($i==1)?'POR':(($i<=5)?'DEF':(($i<=9)?'MED':'DEL'));
@@ -96,13 +96,19 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
         $tarjetasPorJugador[$j['Id_Jugador']] = 0;
     }
 
-    // 1. ASIGNAR GOLES (Ajuste: Defensas casi nulo, Delanteros muy alto)
+    // 1. ASIGNAR GOLES (Re-calibrado para Leyendas)
     for ($i = 0; $i < $golesFavor; $i++) {
         $candidatos = [];
         foreach ($jugadores as $k => $j) {
-            // PESOS AJUSTADOS: DEL(80), MED(15), DEF(1)
-            $peso = ($j['Posicion']=='DEL')?80:(($j['Posicion']=='MED')?15:(($j['Posicion']=='DEF')?1:0));
-            if ($j['Rareza_Jugador'] === 'Leyenda') $peso += 20;
+            // PESOS BASE: DEL(50), MED(15), DEF(2)
+            // Bajamos DEL de 80 a 50 para que la rareza pese más
+            $peso = ($j['Posicion']=='DEL')?50:(($j['Posicion']=='MED')?15:(($j['Posicion']=='DEF')?2:0));
+            
+            // BONOS POR RAREZA (Muy altos para Leyendas)
+            if ($j['Rareza_Jugador'] === 'Leyenda') $peso += 60; // +60 puntos!
+            elseif ($j['Rareza_Jugador'] === 'Heroe') $peso += 30;
+            elseif ($j['Rareza_Jugador'] === 'Crack') $peso += 10;
+            
             if ($peso < 1) $peso = 1; 
             for ($x=0; $x<$peso; $x++) $candidatos[] = $k; 
         }
@@ -116,14 +122,19 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
             $stmtGol = $pdo->prepare("INSERT INTO ACCION (Tipo_Accion, Minuto, Id_Jugador, Id_Partido) VALUES ('gol', ?, ?, ?)");
             $stmtGol->execute([$minuto, $goleadorId, $idPartido]);
 
-            // --- ASISTENCIAS (Ajuste: Probabilidad Ponderada) ---
+            // --- ASISTENCIAS (Re-calibrado: Delanteros asisten más) ---
             if (rand(1,100) <= 70) {
                 $candidatosAsist = [];
                 foreach ($jugadores as $k => $j) {
                     if ($j['Id_Jugador'] && $j['Id_Jugador'] != $goleadorId) {
-                        // PESOS ASISTENCIA: MED(50), DEL(20), DEF(5), POR(1)
-                        $pesoA = ($j['Posicion']=='MED')?50:(($j['Posicion']=='DEL')?20:(($j['Posicion']=='DEF')?5:1));
-                        if ($j['Rareza_Jugador'] === 'Leyenda') $pesoA += 10;
+                        // PESOS ASISTENCIA: MED(40), DEL(35), DEF(5), POR(1)
+                        // Subimos DEL de 20 a 35 (casi igual que MED)
+                        $pesoA = ($j['Posicion']=='MED')?40:(($j['Posicion']=='DEL')?35:(($j['Posicion']=='DEF')?5:1));
+                        
+                        // BONOS ASISTENCIA
+                        if ($j['Rareza_Jugador'] === 'Leyenda') $pesoA += 40;
+                        elseif ($j['Rareza_Jugador'] === 'Heroe') $pesoA += 20;
+                        
                         for ($y=0; $y<$pesoA; $y++) $candidatosAsist[] = $j['Id_Jugador'];
                     }
                 }
@@ -138,15 +149,12 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
         }
     }
 
-    // 2. TARJETAS (Ajuste: Promedio 2.5 amarillas / 0.3 rojas)
-    // Probabilidades ajustadas para sumar aprox ~1.25 tarjetas por equipo (2.5 total)
+    // 2. TARJETAS
     foreach ($jugadores as $j) {
         if (!$j['Id_Jugador']) continue;
-        // DEF: 9%, MED: 6%, DEL: 3%, POR: 0.5%
         $chance = ($j['Posicion']=='DEF')?9:(($j['Posicion']=='MED')?6:(($j['Posicion']=='DEL')?3:0.5));
         
-        if (rand(1, 1000) <= ($chance * 10)) { // Multiplicamos por 10 para usar rand 1000 y tener decimales
-            // Roja: 12% de probabilidad si ya hubo falta (aprox 0.3 por partido total)
+        if (rand(1, 1000) <= ($chance * 10)) { 
             $tipo = (rand(1, 100) <= 88) ? 'tarjeta_amarilla' : 'tarjeta_roja';
             $tarjetasPorJugador[$j['Id_Jugador']] = ($tipo == 'tarjeta_amarilla' ? 1 : 2);
             
@@ -155,7 +163,7 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
         }
     }
     
-    // 3. CALIFICACIONES (Sin cambios mayores, solo el +0.5 asistencia ya estaba)
+    // 3. CALIFICACIONES
     foreach ($jugadores as $j) {
         if (!$j['Id_Jugador']) continue;
         $id = $j['Id_Jugador'];
@@ -166,7 +174,7 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
         else $base = rand(60, 75) / 10;
 
         $base += ($golesPorJugador[$id] * 1.0);
-        $base += ($asistPorJugador[$id] * 0.5); // Bono Asistencia
+        $base += ($asistPorJugador[$id] * 0.5); 
         
         if ($gano) $base += 0.5;
         if (!$gano && ($golesContra - $golesFavor) >= 3) $base -= 1.0;
