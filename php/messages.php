@@ -2,18 +2,12 @@
 header('Content-Type: application/json');
 require 'conexion.php';
 
-// --- HELPERS DE ENCRIPTACIÓN (Simple AES-128) ---
+// --- HELPERS ENCRIPTACIÓN ---
 define('ENC_KEY', 'KingnielaSecretKey2026');
-define('ENC_IV', '1234567891011121'); // 16 bytes fijos para simplicidad
+define('ENC_IV', '1234567891011121');
+function encryptText($text) { return openssl_encrypt($text, 'AES-128-CTR', ENC_KEY, 0, ENC_IV); }
+function decryptText($text) { return openssl_decrypt($text, 'AES-128-CTR', ENC_KEY, 0, ENC_IV); }
 
-function encryptText($text) {
-    return openssl_encrypt($text, 'AES-128-CTR', ENC_KEY, 0, ENC_IV);
-}
-function decryptText($text) {
-    return openssl_decrypt($text, 'AES-128-CTR', ENC_KEY, 0, ENC_IV);
-}
-
-// Función Socket
 function broadcastToSocket($message) {
     $data = ['sender_id' => intval($message['Id_Remitente']), 'receiver_id' => intval($message['Id_Destinatario']), 'message' => $message];
     $payload = json_encode($data);
@@ -25,21 +19,59 @@ function broadcastToSocket($message) {
     curl_exec($ch); curl_close($ch);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+function broadcastReadStatus($reader_id, $original_sender_id) {
+    $data = ['reader_id' => intval($reader_id), 'original_sender_id' => intval($original_sender_id)];
+    $payload = json_encode($data);
+    $ch = curl_init('http://localhost:3000/broadcast-read');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Content-Length: ' . strlen($payload)]);
+    curl_exec($ch); curl_close($ch);
+}
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST') {
+    $action = $_POST['action'] ?? '';
+    
+    // --- CASO 1: MARCAR COMO LEÍDO (NUEVO) ---
+    if ($action === 'mark_read') {
+        $reader = $_POST['reader_id'] ?? 0;
+        $sender = $_POST['sender_id'] ?? 0; // El que envió los mensajes que ahora estoy leyendo
+
+        if (!$reader || !$sender) { echo json_encode(['success'=>false]); exit; }
+
+        try {
+            // Marcar como leídos todos los mensajes recibidos de ese sender
+            $sql = "UPDATE MENSAJE SET Leido = 1 WHERE Id_Remitente = ? AND Id_Destinatario = ? AND Leido = 0";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$sender, $reader]); // Sender es el remitente original, Reader soy yo
+
+            if ($stmt->rowCount() > 0) {
+                broadcastReadStatus($reader, $sender); // Avisar al sender que ya leí
+                echo json_encode(['success' => true, 'updated' => $stmt->rowCount()]);
+            } else {
+                echo json_encode(['success' => true, 'updated' => 0]);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // --- CASO 2: ENVIAR MENSAJE ---
     $sender = $_POST['sender_id'] ?? 0;
     $receiver = $_POST['receiver_id'] ?? 0;
     $contenido = $_POST['content'] ?? '';
     $tipo = $_POST['tipo'] ?? 'texto';
 
     if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-        // ... (Tu lógica de archivos existente, la omito por brevedad pero mantenla igual) ...
-        // Para este ejemplo asumimos texto, si tienes archivos, solo cambia $contenido
         $fileTmp = $_FILES['file']['tmp_name'];
         $fileName = uniqid() . '_' . $_FILES['file']['name'];
         if (!is_dir('../uploads/')) mkdir('../uploads/', 0777, true);
         move_uploaded_file($fileTmp, '../uploads/' . $fileName);
         $contenido = 'uploads/' . $fileName;
-        // Detectar tipo...
         $mime = mime_content_type('../uploads/' . $fileName);
         if (strpos($mime, 'image') !== false) $tipo = 'imagen';
         else if (strpos($mime, 'audio') !== false || strpos($mime, 'video') !== false) $tipo = 'audio';
@@ -47,38 +79,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // 1. VERIFICAR PREFERENCIAS DE ENCRIPTACIÓN
-        // "Si usuario A tiene activado... o usuario B... se encripta"
-        $stmtPref = $pdo->prepare("SELECT Id_Usuario, Preferencias_Encriptacion FROM USUARIO WHERE Id_Usuario IN (?, ?)");
+        $stmtPref = $pdo->prepare("SELECT Preferencias_Encriptacion FROM USUARIO WHERE Id_Usuario IN (?, ?)");
         $stmtPref->execute([$sender, $receiver]);
-        $prefs = $stmtPref->fetchAll(PDO::FETCH_ASSOC);
-        
-        $encriptar = 0;
-        foreach ($prefs as $p) {
-            if ($p['Preferencias_Encriptacion'] == 1) {
-                $encriptar = 1;
-                break; // Con que uno quiera, se encripta
-            }
-        }
+        $prefs = $stmtPref->fetchAll(PDO::FETCH_COLUMN);
+        $encriptar = (in_array(1, $prefs)) ? 1 : 0;
 
-        // 2. ENCRIPTAR SI ES NECESARIO
-        $contenidoFinal = $contenido;
-        if ($encriptar == 1 && $tipo == 'texto') {
-            $contenidoFinal = encryptText($contenido);
-        }
+        $contenidoFinal = ($encriptar == 1 && $tipo == 'texto') ? encryptText($contenido) : $contenido;
 
-        // 3. GUARDAR
         $sql = "INSERT INTO MENSAJE (Id_Remitente, Id_Destinatario, Contenido, Tipo, Esta_Encriptado) VALUES (?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$sender, $receiver, $contenidoFinal, $tipo, $encriptar]);
         
-        // 4. RECUPERAR Y ENVIAR (Desencriptado para el socket instantáneo)
         $lastId = $pdo->lastInsertId();
         $stmtGet = $pdo->prepare("SELECT * FROM MENSAJE WHERE Id_Mensaje = ?");
         $stmtGet->execute([$lastId]);
         $msg = $stmtGet->fetch(PDO::FETCH_ASSOC);
 
-        // Para el frontend, enviamos el texto legible
         if ($msg['Esta_Encriptado'] == 1 && $msg['Tipo'] == 'texto') {
             $msg['Contenido'] = decryptText($msg['Contenido']);
         }
@@ -89,16 +105,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (PDOException $e) { echo json_encode(['success' => false, 'message' => $e->getMessage()]); }
 
 } else {
-    // GET
+    // --- GET: CARGAR HISTORIAL ---
     $sender = $_GET['sender_id'] ?? 0;
     $receiver = $_GET['receiver_id'] ?? 0;
     
+    // Al cargar historial, aprovechamos para marcar como leídos
+    $updateSql = "UPDATE MENSAJE SET Leido = 1 WHERE Id_Remitente = ? AND Id_Destinatario = ? AND Leido = 0";
+    $stmtUpdate = $pdo->prepare($updateSql);
+    $stmtUpdate->execute([$receiver, $sender]); // Ojo con el orden: Receiver es el OTRO (Remitente)
+    
+    if ($stmtUpdate->rowCount() > 0) broadcastReadStatus($sender, $receiver);
+
     $sql = "SELECT * FROM MENSAJE WHERE (Id_Remitente = ? AND Id_Destinatario = ?) OR (Id_Remitente = ? AND Id_Destinatario = ?) ORDER BY Fecha_Envio ASC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$sender, $receiver, $receiver, $sender]);
     $msgs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // DESENCRIPTAR AL LEER
     foreach ($msgs as &$m) {
         if ($m['Esta_Encriptado'] == 1 && $m['Tipo'] == 'texto') {
             $m['Contenido'] = decryptText($m['Contenido']);

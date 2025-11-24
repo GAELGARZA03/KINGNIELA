@@ -106,9 +106,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isChatOpenWithSender || isChatOpenWithReceiver) {
             const isMe = senderId === currentUser.id;
             appendMessageToChat(msg, isMe ? 'sent' : 'received');
-        } else {
-            console.log("Mensaje de fondo de", senderId);
+            
+            // --- NUEVO: Si lo recibí yo y tengo el chat abierto, marcar como leído ---
+            if (!isMe && isChatOpenWithSender) {
+                notifyReadStatus(senderId);
+            }
         }
+    });
+
+// --- FUNCION: MARCAR COMO LEÍDO ---
+    function notifyReadStatus(friendId) {
+        const fd = new FormData();
+        fd.append('action', 'mark_read');
+        fd.append('reader_id', currentUser.id); 
+        fd.append('sender_id', friendId); 
+
+        fetch('php/messages.php', { method: 'POST', body: fd })
+            .then(() => {
+                // ACTUALIZAR NOTIFICACIONES AL INSTANTE
+                if (window.actualizarNotificaciones) window.actualizarNotificaciones();
+            });
+    }
+
+    messageInput.addEventListener('focus', () => {
+        if (currentChatFriendId) notifyReadStatus(currentChatFriendId);
     });
 
 

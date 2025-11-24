@@ -122,8 +122,14 @@ nav ul li a:hover {
 }
 
 /* Círculo de notificación */
+.notify {
+    position: relative;
+}
+
 .notify::after {
-    content: '9+';
+    /* CAMBIO: El contenido viene del atributo data-count del HTML */
+    content: attr(data-count);
+    
     position: absolute;
     top: -5px;
     right: -5px;
@@ -134,9 +140,19 @@ nav ul li a:hover {
     border-radius: 50%;
     width: 20px;
     height: 20px;
+    
+    /* Centrado del texto */
     display: flex;
     justify-content: center;
     align-items: center;
+    
+    /* Por defecto oculto, se muestra solo si hay datos */
+    display: none; 
+}
+
+/* Regla Mágica: Si tiene data-count y NO es "0", muéstralo flex */
+.notify[data-count]:not([data-count="0"])::after {
+    display: flex;
 }
 
 /* Acciones de usuario a la derecha */
