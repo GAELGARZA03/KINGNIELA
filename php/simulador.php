@@ -23,42 +23,39 @@ try {
         $probLocal = calcularProbabilidadVictoria($p['Rareza_L'], $p['Rareza_V']);
         $rand = rand(1, 100);
         $golesL = 0; $golesV = 0; $penalesL = null; $penalesV = null; $huboPenales = false;
-        $ganadorPenales = null; // 'L' o 'V'
+        $ganadorPenales = null;
 
         // 90 Minutos
         if ($rand <= $probLocal) { $golesL = rand(1, 3); $golesV = rand(0, $golesL - 1); }
         elseif ($rand <= ($probLocal + 25)) { $golesL = rand(0, 2); $golesV = $golesL; } 
         else { $golesV = rand(1, 3); $golesL = rand(0, $golesV - 1); }
 
-        // Tiempos Extras (Solo eliminatorias)
+        // Tiempos Extras
         if ($esEliminatoria && $golesL == $golesV) {
-            if (rand(1,100) <= 30) { // 30% chance de gol en prórroga
-                if (rand(1,100) <= 50) $golesL++; else $golesV++;
-            }
+            if (rand(1,100) <= 30) { if (rand(1,100) <= 50) $golesL++; else $golesV++; }
         }
 
-        // Penales (Si sigue empate)
+        // Penales
         if ($esEliminatoria && $golesL == $golesV) {
             $huboPenales = true;
             $penalesL = 0; $penalesV = 0;
             for($i=0; $i<5; $i++) { if(rand(1,100) <= 75) $penalesL++; if(rand(1,100) <= 75) $penalesV++; }
             while($penalesL == $penalesV) { if(rand(1,100) <= 70) $penalesL++; if(rand(1,100) <= 70) $penalesV++; }
-            
             $ganadorPenales = ($penalesL > $penalesV) ? 'L' : 'V';
         }
 
-        // Guardar Resultado en BD
+        // Guardar Resultado
         $stmtUpd = $pdo->prepare("UPDATE PARTIDO SET Goles_Local = ?, Goles_Visitante = ?, Penales_Local = ?, Penales_Visitante = ?, Estado = 'finalizado' WHERE Id_Partido = ?");
         $stmtUpd->execute([$golesL, $golesV, $penalesL, $penalesV, $p['Id_Partido']]);
 
         $ganadorLocal = ($golesL > $golesV) || ($huboPenales && $penalesL > $penalesV);
         $ganadorVisit = ($golesV > $golesL) || ($huboPenales && $penalesV > $penalesL);
 
-        // Simular Eventos (Jugadores)
+        // Simular Eventos
         simularDesempenoEquipo($pdo, $p['Id_Partido'], $p['Id_Local'], $golesL, $golesV, $ganadorLocal);
         simularDesempenoEquipo($pdo, $p['Id_Partido'], $p['Id_Visit'], $golesV, $golesL, $ganadorVisit);
 
-        // --- 2. CALIFICAR PREDICCIONES (Pasamos quién ganó en penales) ---
+        // --- 2. CALIFICAR ---
         procesarPronosticos($pdo, $p['Id_Partido'], $golesL, $golesV, $ganadorPenales);
 
         $resTxt = "{$golesL} - {$golesV}";
@@ -71,7 +68,7 @@ try {
 } catch (Exception $e) { echo json_encode(['success' => false, 'message' => $e->getMessage()]); }
 
 // ==========================================================
-// FUNCIONES AUXILIARES
+// FUNCIONES
 // ==========================================================
 
 function getRarezaValor($rareza) {
@@ -83,22 +80,20 @@ function calcularProbabilidadVictoria($rarezaL, $rarezaV) {
     return max(15, min(85, $prob));
 }
 
-// --- LÓGICA DE PUNTUACIÓN EXACTA ---
 function procesarPronosticos($pdo, $idPartido, $golesRealL, $golesRealV, $ganadorPenales = null) {
-    // Obtener todos los pronósticos
     $sql = "SELECT pr.Id_Pronostico, pr.Prediccion_Local, pr.Prediccion_Visitante, k.Dificultad FROM PRONOSTICOS pr JOIN QUINIELA_K k ON pr.Id_Quiniela_K = k.Id_Quiniela_K WHERE pr.Id_Partido = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$idPartido]);
     $pronosticos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Resultados Reales
     $signoReal = ($golesRealL > $golesRealV) ? 'L' : (($golesRealV > $golesRealL) ? 'V' : 'E');
     $diferenciaReal = $golesRealL - $golesRealV;
 
-    // Mapeo de Goles por Jugador (Para Modo Leyenda)
-    $stmtGoles = $pdo->prepare("SELECT Id_Jugador, COUNT(*) as Goles FROM ACCION WHERE Id_Partido = ? AND Tipo_Accion = 'gol' GROUP BY Id_Jugador");
+    // LISTA DE GOLES REALES (Desglosada: [IdJugador, IdJugador...])
+    // Ejemplo: Si Messi (ID 10) metió 2 goles, el array será [10, 10]
+    $stmtGoles = $pdo->prepare("SELECT Id_Jugador FROM ACCION WHERE Id_Partido = ? AND Tipo_Accion = 'gol'");
     $stmtGoles->execute([$idPartido]);
-    $golesPorJugador = $stmtGoles->fetchAll(PDO::FETCH_KEY_PAIR);
+    $listaGolesReales = $stmtGoles->fetchAll(PDO::FETCH_COLUMN);
 
     foreach ($pronosticos as $pron) {
         $puntos = 0;
@@ -106,45 +101,42 @@ function procesarPronosticos($pdo, $idPartido, $golesRealL, $golesRealV, $ganado
         $pL = $pron['Prediccion_Local'];
         $pV = $pron['Prediccion_Visitante'];
         
-        // Signo Predicción
         $signoPred = ($pL > $pV) ? 'L' : (($pV > $pL) ? 'V' : 'E');
-        if ($pL == -1) $signoPred = 'E'; // Aficionado
+        if ($pL == -1) $signoPred = 'E';
 
-        // 1. CALCULO DE PUNTOS POR RESULTADO
+        // Puntos Base
         if ($pron['Dificultad'] === 'Aficionado') {
             if ($signoPred === $signoReal) { $puntos = 3; $acierto = 1; }
-        } 
-        else {
-            // Profesional / Leyenda
-            if ($pL == $golesRealL && $pV == $golesRealV) {
-                $puntos = 10; $acierto = 1; // Exacto
-            } elseif ($signoPred === $signoReal && ($pL - $pV) == $diferenciaReal) {
-                $puntos = 5; $acierto = 1; // Diferencia
-            } elseif ($signoPred === $signoReal) {
-                $puntos = 3; $acierto = 1; // Ganador
-            }
+        } else {
+            if ($pL == $golesRealL && $pV == $golesRealV) { $puntos = 10; $acierto = 1; } 
+            elseif ($signoPred === $signoReal && ($pL - $pV) == $diferenciaReal) { $puntos = 5; $acierto = 1; }
+            elseif ($signoPred === $signoReal) { $puntos = 3; $acierto = 1; }
         }
 
-        // 2. PUNTO DE CONSUELO (SI HUBO PENALES)
-        // Si falló el pronóstico (puntos=0) PERO acertó al equipo que avanzó en penales
+        // Punto Consuelo (Penales)
         if ($puntos == 0 && $ganadorPenales !== null) {
-            if ($ganadorPenales === 'L' && $signoPred === 'L') {
-                $puntos = 2; // Acertó que pasaba el Local
-            } elseif ($ganadorPenales === 'V' && $signoPred === 'V') {
-                $puntos = 2; // Acertó que pasaba el Visitante
+            if (($ganadorPenales === 'L' && $signoPred === 'L') || ($ganadorPenales === 'V' && $signoPred === 'V')) {
+                $puntos = 1;
             }
         }
 
-        // 3. BONUS LEYENDA (GOLEADORES)
+        // --- BONUS LEYENDA (Algoritmo de Emparejamiento) ---
         if ($pron['Dificultad'] === 'Leyenda') {
             $stmtPG = $pdo->prepare("SELECT Id_Jugador FROM GOLEADORES_PRONOSTICO WHERE Id_Pronostico = ?");
             $stmtPG->execute([$pron['Id_Pronostico']]);
-            $misGoleadores = $stmtPG->fetchAll(PDO::FETCH_COLUMN);
+            $misPredicciones = $stmtPG->fetchAll(PDO::FETCH_COLUMN); // Mis jugadores [10, 12]
 
-            foreach ($misGoleadores as $idJ) {
-                if (isset($golesPorJugador[$idJ])) {
-                    // CAMBIO: Ahora es +1 punto por cada gol (antes +5)
-                    $puntos += ($golesPorJugador[$idJ] * 1);
+            // Copia de los goles reales para ir "tachándolos"
+            $golesDisponibles = $listaGolesReales; 
+
+            foreach ($misPredicciones as $idPredicho) {
+                // Buscamos si este jugador metió gol en la lista disponible
+                $key = array_search($idPredicho, $golesDisponibles);
+                
+                if ($key !== false) {
+                    $puntos += 1; // +1 Punto por acierto
+                    unset($golesDisponibles[$key]); // Consumir ese gol (ya no cuenta para otra predicción)
+                    // Re-indexar array no es necesario para array_search, pero cuidado si usas for
                 }
             }
         }
@@ -153,24 +145,20 @@ function procesarPronosticos($pdo, $idPartido, $golesRealL, $golesRealV, $ganado
     }
 }
 
-// --- SIMULADOR DE EVENTOS (Sin cambios lógicos) ---
+// --- SIMULADOR JUGADORES (Sin cambios, solo copia igual) ---
 function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $golesContra, $gano) {
     $stmtJug = $pdo->prepare("SELECT * FROM JUGADOR WHERE Id_Equipo = ?");
     $stmtJug->execute([$idEquipo]);
     $jugadores = $stmtJug->fetchAll(PDO::FETCH_ASSOC);
 
     if (empty($jugadores)) { 
-        $jugadores = [];
-        for($i=1; $i<=11; $i++) {
-            $pos = ($i==1)?'POR':(($i<=5)?'DEF':(($i<=9)?'MED':'DEL'));
-            $jugadores[] = ['Id_Jugador' => null, 'Nombre_Jugador' => 'Genérico', 'Posicion' => $pos, 'Rareza_Jugador' => 'Regular'];
-        }
+        $jugadores = []; for($i=1; $i<=11; $i++) { $pos = ($i==1)?'POR':(($i<=5)?'DEF':(($i<=9)?'MED':'DEL')); $jugadores[] = ['Id_Jugador' => null, 'Nombre_Jugador' => 'Genérico', 'Posicion' => $pos, 'Rareza_Jugador' => 'Regular']; }
     }
 
     $golesPorJugador = []; $asistPorJugador = []; $tarjetasPorJugador = [];
     foreach ($jugadores as $j) if($j['Id_Jugador']) { $golesPorJugador[$j['Id_Jugador']] = 0; $asistPorJugador[$j['Id_Jugador']] = 0; $tarjetasPorJugador[$j['Id_Jugador']] = 0; }
 
-    // ASIGNAR GOLES
+    // GOLES
     for ($i = 0; $i < $golesFavor; $i++) {
         $candidatos = [];
         foreach ($jugadores as $k => $j) {
@@ -187,6 +175,7 @@ function simularDesempenoEquipo($pdo, $idPartido, $idEquipo, $golesFavor, $goles
             $minuto = ($jugadores[$idxGol]['Posicion'] == 'POR') ? rand(88, 95) : rand(1, 90);
             $pdo->prepare("INSERT INTO ACCION (Tipo_Accion, Minuto, Id_Jugador, Id_Partido) VALUES ('gol', ?, ?, ?)")->execute([$minuto, $goleadorId, $idPartido]);
 
+            // ASISTENCIAS
             if (rand(1,100) <= 70) {
                 $candidatosAsist = [];
                 foreach ($jugadores as $k => $j) {
