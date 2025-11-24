@@ -4,7 +4,6 @@ require 'conexion.php';
 
 try {
     // 1. OBTENER CLASIFICACIÓN DE GRUPOS
-    // Calculamos puntos, DG y GF para todos los equipos
     $sql = "
         SELECT e.Id_Equipo, e.Nombre_Equipo, e.Grupo,
         SUM(CASE 
@@ -38,7 +37,6 @@ try {
     $segundos = [];
     $terceros = [];
 
-    // Agrupar por grupo
     $grupos = [];
     foreach ($equipos as $eq) {
         $grupos[$eq['Grupo']][] = $eq;
@@ -50,45 +48,42 @@ try {
         if (isset($lista[2])) $terceros[] = $lista[2];
     }
 
-    // Ordenar mejores terceros (Pts > DG > GF)
+    // Mejores terceros
     usort($terceros, function($a, $b) {
         if ($b['Pts'] != $a['Pts']) return $b['Pts'] - $a['Pts'];
         if ($b['DG'] != $a['DG']) return $b['DG'] - $a['DG'];
         return $b['GF'] - $a['GF'];
     });
-
-    // Tomar los 8 mejores terceros
     $mejoresTerceros = array_slice($terceros, 0, 8);
     
-    // Total 32 equipos: 12 primeros + 12 segundos + 8 terceros
+    // Total 32
     $clasificados = array_merge($primeros, $segundos, $mejoresTerceros);
 
-    // 3. GENERAR CRUCES (Simplificado: 1 vs 2/3)
-    // Para evitar lógica compleja de cruces FIFA exacta, emparejaremos:
-    // Los mejores primeros contra los peores clasificados.
-    
-    // Ordenar todos los 32 clasificados por rendimiento global
+    // 3. GENERAR CRUCES (1 vs 32, 2 vs 31...)
     usort($clasificados, function($a, $b) {
         if ($b['Pts'] != $a['Pts']) return $b['Pts'] - $a['Pts'];
         return $b['DG'] - $a['DG'];
     });
 
-    $top16 = array_slice($clasificados, 0, 16); // Cabezas de serie
-    $low16 = array_slice($clasificados, 16, 16); // Retadores
-    $low16 = array_reverse($low16); // El mejor 1ro vs el peor clasificado
+    $top16 = array_slice($clasificados, 0, 16); 
+    $low16 = array_slice($clasificados, 16, 16); 
+    $low16 = array_reverse($low16); 
 
     $pdo->beginTransaction();
     
-    // Borrar cruces anteriores si existen
     $pdo->query("DELETE FROM PARTIDO WHERE Fase = 'Dieciseisavos de final'");
 
     $crucesGenerados = [];
+    // FECHA OFICIAL INICIO ELIMINATORIAS: 29 DE JUNIO
+    $fechaDieci = '2026-06-29'; 
+
     for ($i = 0; $i < 16; $i++) {
         $local = $top16[$i];
         $visita = $low16[$i];
         
-        $stmtIns = $pdo->prepare("INSERT INTO PARTIDO (Fase, Estado, Id_Equipo_Local, Id_Equipo_Visitante) VALUES ('Dieciseisavos de final', 'programado', ?, ?)");
-        $stmtIns->execute([$local['Id_Equipo'], $visita['Id_Equipo']]);
+        // CAMBIO: Agregamos Fecha y Hora
+        $stmtIns = $pdo->prepare("INSERT INTO PARTIDO (Fase, Estado, Id_Equipo_Local, Id_Equipo_Visitante, Fecha_Partido, Hora_Partido) VALUES ('Dieciseisavos de final', 'programado', ?, ?, ?, '20:00:00')");
+        $stmtIns->execute([$local['Id_Equipo'], $visita['Id_Equipo'], $fechaDieci]);
         
         $crucesGenerados[] = "{$local['Nombre_Equipo']} vs {$visita['Nombre_Equipo']}";
     }

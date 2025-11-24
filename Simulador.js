@@ -159,4 +159,15 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .catch(e => console.error("Error de red al avanzar:", e));
     }
+
+    window.filtrarPartidos = function(faseSeleccionada) {
+        const tarjetas = document.querySelectorAll('.feed-card');
+        tarjetas.forEach(card => {
+            if (faseSeleccionada === 'all' || card.getAttribute('data-fase') === faseSeleccionada) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
 });
