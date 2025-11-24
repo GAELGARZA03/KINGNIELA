@@ -65,16 +65,18 @@
             <div class="create-task">
                 <span id="cerrarRecuadroBtn" class="cerrar">&times;</span>
                 <h2>Nueva Tarea</h2>
+                
                 <select name="Grupo" id="Select-Grupo">
-                    <option value="0">Selecciona Grupo</option>
-                    <option value="1">Mundial 2026 Fantasy</option>
+                    <option value="0">Cargando grupos...</option>
                 </select>
-                <label for="NombreTarea">Nombre tarea:</label>
-                <input type="text" placeholder="Jornada 1">
-                <label for="Vencimiento">Fecha de Vencimiento:</label>
-                <input type="datetime-local">
+                
+                <label for="input-nombre-tarea">Nombre tarea:</label>
+                <input type="text" id="input-nombre-tarea" placeholder="Ej. Subir quiniela">
+                
+                <label for="input-fecha-tarea">Fecha de Vencimiento:</label>
+                <input type="datetime-local" id="input-fecha-tarea">
 
-                <input type="button" value="Crear tarea">
+                <input type="button" value="Crear tarea" id="btn-crear-final">
             </div>
         </div>
         
@@ -84,8 +86,7 @@
     <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
 
     <script src="Tarea.js"></script>
-    <script src="app.js"></script>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/socket.js"></script>
 </body>
 <footer>

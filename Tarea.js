@@ -1,178 +1,187 @@
-// JS para cambiar entre pestañas (Tu código original)
+// Lógica de Pestañas
 function openTab(evt, tabName) {
-  let i, tabcontent, tablinks;
-
-  // Oculta todo el contenido de las pestañas
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  // Quita la clase "active" de todos los botones
-  tablinks = document.getElementsByClassName("tablink");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].classList.remove("active");
-  }
-
-  // Muestra la pestaña actual y añade la clase "active" al botón
-  // Validación simple por si se llama manual
-  const targetTab = document.getElementById(tabName);
-  if(targetTab) {
-      targetTab.style.display = "block";
-  }
-  
-  if(evt) {
-      evt.currentTarget.classList.add("active");
-  }
+    let i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablink");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+    document.getElementById(tabName).style.display = "block";
+    if(evt) evt.currentTarget.classList.add("active");
 }
 
-// --- LÓGICA DE TAREAS ---
-
-// 1. Base de datos simulada (Array de objetos)
-// Puedes agregar más tareas aquí para probar
-const misTareas = [
-    {
-        id: 1,
-        nombre: "Jornada 1",
-        grupo: "Mundial 2026 Fantasy",
-        fecha: "2025-11-25T14:00", // Fecha futura (Próxima)
-        completada: false
-    },
-    {
-        id: 2,
-        nombre: "Predicción Octavos",
-        grupo: "Liga de Amigos",
-        fecha: "2023-10-20T23:59", // Fecha pasada (Vencida)
-        completada: false
-    },
-    {
-        id: 3,
-        nombre: "Registro Inicial",
-        grupo: "Global Kingniela",
-        fecha: "2024-01-15T10:00", // Fecha irrelevante porque está completada
-        completada: true
-    },
-    {
-        id: 4,
-        nombre: "Jornada 2",
-        grupo: "Mundial 2026 Fantasy",
-        fecha: "2025-12-01T16:00", // Fecha futura (Próxima)
-        completada: false
-    },
-    {
-        id: 5,
-        nombre: "Jornada 2",
-        grupo: "Mundial 2026 Fantasy",
-        fecha: "2025-12-01T16:00", // Fecha futura (Próxima)
-        completada: false
-    },
-    {
-        id: 6,
-        nombre: "Jornada 2",
-        grupo: "Mundial 2026 Fantasy",
-        fecha: "2025-12-01T16:00", // Fecha futura (Próxima)
-        completada: false
-    }
-];
-
-// 2. Función para renderizar las tareas
-function cargarTareas() {
-    const contenedorProximas = document.getElementById('lista-proximas');
-    const contenedorVencidas = document.getElementById('lista-vencidas');
-    const contenedorCompletadas = document.getElementById('lista-completadas');
-
-    // Limpiar contenedores antes de cargar
-    contenedorProximas.innerHTML = '';
-    contenedorVencidas.innerHTML = '';
-    contenedorCompletadas.innerHTML = '';
-
-    const ahora = new Date();
-
-    // Mensajes si no hay tareas
-    if(misTareas.length === 0) {
-        contenedorProximas.innerHTML = '<p>No tienes tareas pendientes.</p>';
+document.addEventListener("DOMContentLoaded", function() {
+    const currentUser = JSON.parse(localStorage.getItem('kingniela_user'));
+    if (!currentUser) {
+        window.location.href = 'IniciarSesion.html';
         return;
     }
 
-    misTareas.forEach(tarea => {
-        const fechaTarea = new Date(tarea.fecha);
-        
-        // Formatear fecha para mostrarla bonita
-        const opcionesFecha = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-        const fechaTexto = fechaTarea.toLocaleDateString('es-ES', opcionesFecha);
+    // Referencias Modal
+    const modal = document.getElementById('miRecuadro');
+    const btnAbrir = document.getElementById('abrirRecuadroBtn');
+    const btnCerrar = document.getElementById('cerrarRecuadroBtn');
+    const btnCrear = document.getElementById('btn-crear-final');
+    
+    // Inputs
+    const selectGrupo = document.getElementById('Select-Grupo');
+    const inpNombre = document.getElementById('input-nombre-tarea');
+    const inpFecha = document.getElementById('input-fecha-tarea');
 
-        // Crear el HTML de la tarjeta
-        const tarjeta = document.createElement('div');
-        tarjeta.classList.add('task-card');
+    // 1. Cargar Tareas al iniciar
+    cargarTareas();
 
-        // Determinar dónde va la tarea
-        if (tarea.completada) {
-            // CASO: COMPLETADA
-            tarjeta.classList.add('completada');
-            tarjeta.innerHTML = `
-                <div class="task-info">
-                    <h4>${tarea.nombre}</h4>
-                    <p>${tarea.grupo}</p>
-                    <p class="date">Completada</p>
-                </div>
-                <button class="btn-check">✓</button>
-            `;
-            contenedorCompletadas.appendChild(tarjeta);
-
-        } else if (fechaTarea < ahora) {
-            // CASO: VENCIDA (Fecha tarea es menor a hoy y no está completada)
-            tarjeta.classList.add('vencida');
-            tarjeta.innerHTML = `
-                <div class="task-info">
-                    <h4>${tarea.nombre}</h4>
-                    <p>${tarea.grupo}</p>
-                    <p class="date">Venció: ${fechaTexto}</p>
-                </div>
-                <button class="btn-check" onclick="marcarComoCompletada(${tarea.id})">✓</button>
-            `;
-            contenedorVencidas.appendChild(tarjeta);
-
-        } else {
-            // CASO: PRÓXIMA (Fecha tarea es mayor a hoy y no está completada)
-            tarjeta.innerHTML = `
-                <div class="task-info">
-                    <h4>${tarea.nombre}</h4>
-                    <p>${tarea.grupo}</p>
-                    <p class="date">Vence: ${fechaTexto}</p>
-                </div>
-                <button class="btn-check" onclick="marcarComoCompletada(${tarea.id})"></button>
-            `;
-            contenedorProximas.appendChild(tarjeta);
-        }
+    // 2. Lógica Modal
+    btnAbrir.addEventListener('click', () => {
+        modal.classList.remove('oculto');
+        modal.style.display = 'flex'; // Asegurar flex para centrar
+        cargarGrupos(); // Llenar select al abrir
     });
     
-    // Mensajes vacíos por estética
-    if(contenedorProximas.children.length === 0) contenedorProximas.innerHTML = '<p>No hay tareas próximas.</p>';
-    if(contenedorVencidas.children.length === 0) contenedorVencidas.innerHTML = '<p>¡Bien! No tienes tareas vencidas.</p>';
-}
+    btnCerrar.addEventListener('click', () => {
+        modal.classList.add('oculto');
+        modal.style.display = 'none';
+    });
 
-// 3. Función para marcar tarea (Simula moverla de lista)
-function marcarComoCompletada(id) {
-    // Buscar la tarea en el array
-    const tarea = misTareas.find(t => t.id === id);
-    
-    if(tarea) {
-        tarea.completada = true; // Cambiar estado
-        cargarTareas(); // Volver a pintar todo (esto mueve la tarea visualmente)
-        
-        // Opcional: Abrir la pestaña de completadas para ver el cambio
-        // document.querySelector('.tablink:nth-child(3)').click(); 
-        alert("¡Tarea completada!");
+    window.addEventListener('click', (e) => {
+        if (e.target == modal) {
+            modal.classList.add('oculto');
+            modal.style.display = 'none';
+        }
+    });
+
+    // 3. Crear Tarea
+    btnCrear.addEventListener('click', () => {
+        const idGrupo = selectGrupo.value;
+        const nombre = inpNombre.value.trim();
+        const fecha = inpFecha.value;
+
+        if(!nombre || !fecha || idGrupo == "0") return alert("Llena todos los campos");
+
+        fetch('php/crear_tarea.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id_quiniela: idGrupo, nombre: nombre, fecha: fecha })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if(res.success) {
+                alert("Tarea creada y asignada.");
+                modal.classList.add('oculto');
+                modal.style.display = 'none';
+                inpNombre.value = ""; // Limpiar
+                cargarTareas(); // Recargar lista
+            } else {
+                alert("Error: " + res.message);
+            }
+        });
+    });
+
+    // --- FUNCIONES ---
+
+    function cargarGrupos() {
+        selectGrupo.innerHTML = '<option value="0">Cargando...</option>';
+        fetch('php/mis_quinielas.php') // Reutilizamos el script de quinielas
+        .then(r => r.json())
+        .then(data => {
+            selectGrupo.innerHTML = '<option value="0">Selecciona Grupo</option>';
+            if(Array.isArray(data)) {
+                data.forEach(q => {
+                    selectGrupo.innerHTML += `<option value="${q.Id_Quiniela}">${q.Nombre_Quiniela}</option>`;
+                });
+            }
+        });
     }
-}
 
+    function cargarTareas() {
+        const contProximas = document.getElementById('lista-proximas');
+        const contVencidas = document.getElementById('lista-vencidas');
+        const contCompletadas = document.getElementById('lista-completadas');
 
-// Inicializar al cargar
-document.addEventListener("DOMContentLoaded", function() {
-    // Simular clic en la primera pestaña
-    const primerTab = document.getElementsByClassName("tablink")[0];
-    if(primerTab) primerTab.click();
+        contProximas.innerHTML = '<p>Cargando...</p>';
+        contVencidas.innerHTML = '';
+        contCompletadas.innerHTML = '';
 
-    // Cargar las tareas
-    cargarTareas();
+        fetch('php/mis_tareas.php')
+        .then(r => r.json())
+        .then(tareas => {
+            contProximas.innerHTML = '';
+            
+            if(tareas.length === 0) {
+                contProximas.innerHTML = '<p>No tienes tareas pendientes.</p>';
+                return;
+            }
+
+            const ahora = new Date();
+
+            tareas.forEach(t => {
+                const fechaTarea = new Date(t.Fecha_Vencimiento);
+                const fechaTexto = fechaTarea.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                const div = document.createElement('div');
+                div.className = 'task-card';
+
+                if (t.Realizado == 1) {
+                    // COMPLETADA
+                    div.classList.add('completada');
+                    div.innerHTML = `
+                        <div class="task-info">
+                            <h4>${t.Nombre_Tarea}</h4>
+                            <p>${t.Grupo}</p>
+                            <p class="date">Completada</p>
+                        </div>
+                        <button class="btn-check" style="cursor:default">✓</button>
+                    `;
+                    contCompletadas.appendChild(div);
+                } 
+                else if (fechaTarea < ahora) {
+                    // VENCIDA
+                    div.classList.add('vencida');
+                    div.innerHTML = `
+                        <div class="task-info">
+                            <h4>${t.Nombre_Tarea}</h4>
+                            <p>${t.Grupo}</p>
+                            <p class="date">Venció: ${fechaTexto}</p>
+                        </div>
+                        <button class="btn-check" onclick="completarTarea(${t.Id_Tarea})">✓</button>
+                    `;
+                    contVencidas.appendChild(div);
+                } 
+                else {
+                    // PRÓXIMA
+                    div.innerHTML = `
+                        <div class="task-info">
+                            <h4>${t.Nombre_Tarea}</h4>
+                            <p>${t.Grupo}</p>
+                            <p class="date">Vence: ${fechaTexto}</p>
+                        </div>
+                        <button class="btn-check" onclick="completarTarea(${t.Id_Tarea})"></button>
+                    `;
+                    contProximas.appendChild(div);
+                }
+            });
+
+            // Mensajes vacíos
+            if(contProximas.innerHTML === '') contProximas.innerHTML = '<p>No hay tareas próximas.</p>';
+            if(contVencidas.innerHTML === '') contVencidas.innerHTML = '<p>No tienes tareas vencidas.</p>';
+        });
+    }
+
+    // Hacer global la función para que funcione en el onclick del HTML generado
+    window.completarTarea = function(id) {
+        fetch('php/completar_tarea.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id_tarea: id })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if(res.success) cargarTareas();
+        });
+    };
+
+    // Abrir primer tab por defecto
+    document.querySelector('.tablink').click();
 });
