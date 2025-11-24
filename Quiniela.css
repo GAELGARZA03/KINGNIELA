@@ -894,3 +894,50 @@ main {
     padding: 5px 10px; border-radius: 20px; cursor: pointer; font-size: 12px;
 }
 .btn-remove-member:hover { background: rgba(255,77,77,0.1); }
+
+/* --- ESTILOS DE RETROALIMENTACIÓN --- */
+
+/* Botones (Modo Aficionado) */
+.btn-predict.correct {
+    background-color: #00ff26 !important; /* Verde */
+    border-color: #00ff26 !important;
+    color: #001f5c !important;
+    box-shadow: 0 0 10px #00ff26;
+}
+
+.btn-predict.wrong {
+    background-color: #ff4d4d !important; /* Rojo */
+    border-color: #ff4d4d !important;
+    color: white !important;
+    opacity: 0.8;
+}
+
+/* Inputs (Modo Pro/Leyenda) */
+.score-input.correct {
+    border: 2px solid #00ff26 !important;
+    color: #00ff26 !important;
+}
+
+.score-input.wrong {
+    border: 2px solid #ff4d4d !important;
+    color: #ff4d4d !important;
+}
+
+/* Texto de Puntos Ganados */
+.points-badge {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffdd00;
+    margin-left: 8px;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Texto de Marcador Real (Modo Pro) */
+.real-result {
+    display: block;
+    font-size: 10px;
+    color: #ccc;
+    margin-top: 4px;
+}
