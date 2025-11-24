@@ -10,7 +10,6 @@ $jornada = $_GET['jornada'] ?? 'Jornada 1';
 if (!$userId || !$idQuiniela) { echo json_encode(['success' => false, 'message' => 'Datos incompletos']); exit; }
 
 try {
-    // 1. Obtener ID de la configuración Fantasy
     $stmtF = $pdo->prepare("SELECT Id_Quiniela_F FROM QUINIELA_F WHERE Id_Quiniela = ?");
     $stmtF->execute([$idQuiniela]);
     $idF = $stmtF->fetchColumn();
@@ -20,20 +19,32 @@ try {
     $fasesExclusivas = ['Jornada 1', 'Jornada 2', 'Jornada 3'];
     $esMercadoExclusivo = in_array($jornada, $fasesExclusivas);
 
+    // --- LÓGICA ESPECIAL PARA LA FINAL ---
+    // Si la jornada es 'Final', incluimos también 'Tercer Puesto'
+    if ($jornada === 'Final') {
+        $fasesQuery = "('Final', 'Tercer Puesto')";
+    } else {
+        $fasesQuery = "('$jornada')";
+    }
+
+    // 1. Verificar Bloqueo (Si hay partidos finalizados en estas fases)
+    $stmtLock = $pdo->query("SELECT COUNT(*) FROM PARTIDO WHERE Fase IN $fasesQuery AND Estado = 'finalizado'");
+    $isLocked = ($stmtLock->fetchColumn() > 0);
+
     // 2. Mercado de Jugadores
+    // Usamos IN $fasesQuery para traer jugadores de ambos partidos en la final
     $sqlMarket = "
         SELECT j.Id_Jugador, j.Nombre_Jugador, j.Posicion, j.Costo, j.Foto, e.Nombre_Equipo, e.Escudo
         FROM JUGADOR j
         JOIN EQUIPO e ON j.Id_Equipo = e.Id_Equipo
         JOIN PARTIDO p ON (p.Id_Equipo_Local = e.Id_Equipo OR p.Id_Equipo_Visitante = e.Id_Equipo)
-        WHERE p.Fase = ?
+        WHERE p.Fase IN $fasesQuery
         ORDER BY j.Costo DESC
     ";
-    $stmtM = $pdo->prepare($sqlMarket);
-    $stmtM->execute([$jornada]);
+    $stmtM = $pdo->query($sqlMarket);
     $todosJugadores = $stmtM->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Jugadores Ocupados (Si es exclusivo)
+    // 3. Jugadores Ocupados
     $ocupadosIds = [];
     if ($esMercadoExclusivo) {
         $stmtOcup = $pdo->prepare("SELECT Id_Jugador FROM SELECCION_JUGADORES WHERE Id_Quiniela_F = ? AND Fase = ? AND Id_Usuario != ?");
@@ -41,8 +52,8 @@ try {
         $ocupadosIds = $stmtOcup->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    // 4. MI EQUIPO + ESTADÍSTICAS PARA PUNTOS
-    // CORRECCIÓN AQUÍ: Usamos 'Tipo_Accion'
+    // 4. MI EQUIPO + ESTADÍSTICAS
+    // También ajustamos el JOIN de Partido para que coincida con las fases
     $sqlMyTeam = "
         SELECT j.Id_Jugador, j.Nombre_Jugador, j.Posicion, j.Costo, j.Foto, j.Id_Equipo,
                e.Nombre_Equipo,
@@ -55,7 +66,7 @@ try {
         FROM SELECCION_JUGADORES s
         JOIN JUGADOR j ON s.Id_Jugador = j.Id_Jugador
         JOIN EQUIPO e ON j.Id_Equipo = e.Id_Equipo
-        LEFT JOIN PARTIDO p ON (p.Id_Equipo_Local = e.Id_Equipo OR p.Id_Equipo_Visitante = e.Id_Equipo) AND p.Fase = s.Fase
+        LEFT JOIN PARTIDO p ON (p.Id_Equipo_Local = e.Id_Equipo OR p.Id_Equipo_Visitante = e.Id_Equipo) AND p.Fase IN $fasesQuery
         LEFT JOIN RENDIMIENTO r ON r.Id_Jugador = j.Id_Jugador AND r.Id_Partido = p.Id_Partido
         WHERE s.Id_Quiniela_F = ? AND s.Fase = ? AND s.Id_Usuario = ?
     ";
@@ -70,61 +81,42 @@ try {
     foreach ($miEquipo as &$jug) {
         $gastoActual += $jug['Costo'];
         
-        // Solo calculamos si hay datos de rendimiento o el partido terminó
+        // Si jugó (tiene calificacion o partido finalizado)
         if (isset($jug['Calificacion_Final']) || (isset($jug['Estado_Partido']) && $jug['Estado_Partido'] == 'finalizado')) {
             $pts = 0;
             $pos = $jug['Posicion']; 
 
-            // A) Rendimiento Base
             $pts += floatval($jug['Calificacion_Final']); 
 
-            // B) Goles
-            $multiGol = 0;
-            if ($pos == 'DEL') $multiGol = 4;
-            elseif ($pos == 'MED') $multiGol = 5;
-            else $multiGol = 6; // DEF y POR
+            $multiGol = ($pos == 'DEL') ? 4 : (($pos == 'MED') ? 5 : 6);
             $pts += ($jug['Cant_Goles'] * $multiGol);
 
-            // C) Asistencias
-            $multiAsist = 0;
-            if ($pos == 'DEL') $multiAsist = 1;
-            elseif ($pos == 'MED') $multiAsist = 3;
-            else $multiAsist = 2; // DEF y POR
+            $multiAsist = ($pos == 'DEL') ? 1 : (($pos == 'MED') ? 3 : 2);
             $pts += ($jug['Cant_Asist'] * $multiAsist);
 
-            // D) Castigos
             $pts += ($jug['Cant_Amarillas'] * -4);
             $pts += ($jug['Cant_Rojas'] * -10);
 
-            // E) Resultado del Equipo y Portería a Cero
             $esLocal = ($jug['Id_Equipo'] == $jug['Id_Equipo_Local']);
             $golesFavor = $esLocal ? $jug['Goles_Local'] : $jug['Goles_Visitante'];
             $golesContra = $esLocal ? $jug['Goles_Visitante'] : $jug['Goles_Local'];
-            
             $diferencia = $golesFavor - $golesContra;
 
-            // Victoria / Derrota
-            if ($diferencia > 0) {
-                if ($diferencia >= 2) $pts += 2; 
-                else $pts += 1; 
-            } elseif ($diferencia < 0) {
-                if ($diferencia <= -2) $pts += -5; 
-                else $pts += -2; 
-            }
+            if ($diferencia > 0) $pts += ($diferencia >= 2) ? 2 : 1;
+            elseif ($diferencia < 0) $pts += ($diferencia <= -2) ? -5 : -2;
 
-            // Portería a Cero 
             if (($pos == 'DEF' || $pos == 'POR') && $golesContra == 0) {
-                if ($pos == 'DEF') $pts += 3;
-                if ($pos == 'POR') $pts += 5;
+                $pts += ($pos == 'DEF') ? 3 : 5;
             }
 
             $jug['Puntos'] = round($pts);
             $puntosTotales += $jug['Puntos'];
 
         } else {
-            $jug['Puntos'] = null; // Aún no juega
+            $jug['Puntos'] = null; 
         }
     }
+    unset($jug); // Romper referencia
 
     $presupuestoRestante = 100.00 - $gastoActual;
 
@@ -142,7 +134,8 @@ try {
         'mi_equipo' => $miEquipo,
         'presupuesto' => $presupuestoRestante,
         'puntos_totales' => $puntosTotales,
-        'es_exclusivo' => $esMercadoExclusivo
+        'es_exclusivo' => $esMercadoExclusivo,
+        'locked' => $isLocked
     ]);
 
 } catch (Exception $e) { echo json_encode(['success' => false, 'message' => $e->getMessage()]); }

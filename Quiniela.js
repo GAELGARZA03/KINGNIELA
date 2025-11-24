@@ -53,8 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Variables FANTASY
     let fantasyBudget = 100.0;
-    let fantasyPointsTotal = 0; // Nueva variable para puntos
+    let fantasyPointsTotal = 0; 
     let myFantasyTeam = { POR:[], DEF:[], MED:[], DEL:[] };
+    let isFantasyLocked = false; // Nueva variable de control
     const FANTASY_LIMITS = { POR:1, DEF:4, MED:3, DEL:3 }; 
 
     // --- SOCKET LISTENERS ---
@@ -178,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================
-    // LÓGICA FANTASY (CORREGIDA)
+    // LÓGICA FANTASY
     // ==========================================================
     function loadFantasyData(idQuiniela, jornada) {
         kingnielarContentArea.innerHTML = "<p style='color:white;text-align:center;'>Cargando mercado...</p>";
@@ -191,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
             myFantasyTeam = { POR:[], DEF:[], MED:[], DEL:[] };
             fantasyBudget = parseFloat(data.presupuesto);
             fantasyPointsTotal = parseFloat(data.puntos_totales || 0);
+            isFantasyLocked = data.locked; // Estado de bloqueo desde backend
 
             data.mi_equipo.forEach(p => {
                 if (myFantasyTeam[p.Posicion]) myFantasyTeam[p.Posicion].push(p);
@@ -204,10 +206,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const budgetColor = fantasyBudget >= 0 ? '#ffdd00' : '#ff4d4d';
         const exclusiveBadge = isExclusive ? '<span style="background:#ff4d4d; padding:2px 5px; border-radius:4px; font-size:10px;">EXCLUSIVO</span>' : '<span style="background:#00ff26; color:black; padding:2px 5px; border-radius:4px; font-size:10px;">LIBRE</span>';
 
-        // Color para los puntos totales
         let ptsColor = '#ccc';
         if (fantasyPointsTotal > 0) ptsColor = '#00ff26';
         else if (fantasyPointsTotal < 0) ptsColor = '#ff4d4d';
+
+        // Botón de guardar solo si NO está bloqueado
+        const saveBtn = isFantasyLocked 
+            ? '<span style="color:#ff4d4d; font-weight:bold; font-size:12px; border:1px solid #ff4d4d; padding:5px 10px; border-radius:5px;">JORNADA CERRADA</span>' 
+            : `<button class="btn-primary" onclick="saveFantasyTeam()" style="padding:5px 15px; font-size:12px; margin-top:5px;">Guardar Equipo</button>`;
 
         let html = `
             <div class="fantasy-header" style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-bottom:15px;">
@@ -223,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:12px; color:#ccc;">Mercado ${exclusiveBadge}</div>
-                    <button class="btn-primary" onclick="saveFantasyTeam()" style="padding:5px 15px; font-size:12px; margin-top:5px;">Guardar Equipo</button>
+                    ${saveBtn}
                 </div>
             </div>
 
@@ -233,6 +239,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="fantasy-market" style="display:flex; flex-direction:column; background:rgba(0,0,0,0.2); border-radius:15px; padding:10px; overflow:hidden;">
+                    <div style="margin-bottom:10px;">
+                        <input type="text" id="player-search" placeholder="Buscar jugador..." 
+                               style="width:100%; padding:8px; border-radius:20px; border:none; font-size:12px; text-align:center;"
+                               onkeyup="filterMarket(null)">
+                    </div>
                     <div class="market-filters" style="display:flex; gap:5px; margin-bottom:10px;">
                         <button class="btn-small" onclick="filterMarket('ALL')">Todo</button>
                         <button class="btn-small" onclick="filterMarket('POR')">POR</button>
@@ -248,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         kingnielarContentArea.innerHTML = html;
 
         window.currentMarket = marketPlayers;
+        window.currentPosFilter = 'ALL'; // Guardar filtro actual
         filterMarket('ALL'); 
         updateFieldVisuals();
     }
@@ -262,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return slots.map((s, i) => `
             <div class="player-slot slot-${s.pos}" id="slot-${s.pos}-${i}" 
-                 style="position:absolute; top:${s.t}; left:${s.l}; transform:translate(-50%,-50%); width:45px; height:45px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;"
+                 style="position:absolute; top:${s.t}; left:${s.l}; transform:translate(-50%,-50%); width:45px; height:45px; background:rgba(0,0,0,0.5); border:2px solid white; border-radius:50%; cursor:${isFantasyLocked ? 'default' : 'pointer'}; display:flex; align-items:center; justify-content:center;"
                  onclick="removePlayerFromSlot('${s.pos}', ${i})">
                 <span style="font-size:10px; font-weight:bold;">${s.pos}</span>
             </div>
@@ -270,10 +282,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.filterMarket = function(pos) {
+        // Si pos es null, usar el último filtro activo
+        if (pos === null) pos = window.currentPosFilter;
+        else window.currentPosFilter = pos;
+
+        const searchText = document.getElementById('player-search').value.toLowerCase();
         const container = document.getElementById('market-list');
         container.innerHTML = "";
         
-        const filtered = window.currentMarket.filter(p => pos === 'ALL' || p.Posicion === pos);
+        const filtered = window.currentMarket.filter(p => {
+            const matchPos = (pos === 'ALL' || p.Posicion === pos);
+            const matchName = p.Nombre_Jugador.toLowerCase().includes(searchText);
+            return matchPos && matchName;
+        });
 
         filtered.forEach(p => {
             const isOwnedByMe = p.lo_tengo;
@@ -282,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let btnHtml = '';
             if (isOwnedByMe) btnHtml = `<span style="color:#00ff26; font-size:10px;">EN EQUIPO</span>`;
             else if (isTaken) btnHtml = `<span style="color:#ff4d4d; font-size:16px;">🔒</span>`; 
+            else if (isFantasyLocked) btnHtml = `<span style="color:#888; font-size:12px;">🚫</span>`; // Bloqueado
             else btnHtml = `<button style="background:#ffdd00; border:none; border-radius:50%; width:20px; height:20px; font-weight:bold; cursor:pointer;" onclick="buyPlayer(${p.Id_Jugador})">+</button>`;
 
             const div = document.createElement('div');
@@ -300,9 +322,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- ARREGLADO: Sincronización correcta entre Mercado y Equipo ---
     window.buyPlayer = function(id) {
-        // Buscar en el mercado
+        if (isFantasyLocked) return alert("La jornada ya ha comenzado o finalizado. No se pueden hacer cambios.");
+        
         const player = window.currentMarket.find(p => parseInt(p.Id_Jugador) === parseInt(id));
         if (!player) return;
 
@@ -311,20 +333,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return alert(`Cupo de ${player.Posicion} lleno. Vende a uno primero.`);
         }
 
-        // Agregar a mi equipo local
         myFantasyTeam[player.Posicion].push(player);
         fantasyBudget -= parseFloat(player.Costo);
-        
-        // Marcar como propio en el objeto del mercado
         player.lo_tengo = true; 
         
         updateUI();
     }
 
     window.sellPlayer = function(id) {
+        if (isFantasyLocked) return alert("La jornada ya ha comenzado o finalizado. No se pueden hacer cambios.");
+
         let foundPos = null;
-        
-        // Buscar y eliminar de mi equipo
         Object.keys(myFantasyTeam).forEach(pos => {
             const idx = myFantasyTeam[pos].findIndex(p => parseInt(p.Id_Jugador) === parseInt(id));
             if (idx !== -1) {
@@ -335,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Desmarcar propiedad en el mercado
         const marketPlayer = window.currentMarket.find(p => parseInt(p.Id_Jugador) === parseInt(id));
         if(marketPlayer) marketPlayer.lo_tengo = false;
 
@@ -349,15 +367,10 @@ document.addEventListener('DOMContentLoaded', () => {
             budgetDiv.style.color = fantasyBudget >= 0 ? '#ffdd00' : 'red';
         }
         updateFieldVisuals();
-        
-        // Refrescar filtro actual para actualizar botones (+ / EN EQUIPO)
-        const activeFilter = document.querySelector('.market-filters button:focus')?.innerText || 'Todo';
-        const mapFilter = {'Todo':'ALL', 'POR':'POR', 'DEF':'DEF', 'MED':'MED', 'DEL':'DEL'};
-        filterMarket(mapFilter[activeFilter] || 'ALL'); 
+        filterMarket(null); // Refrescar con filtro actual
     }
 
     function updateFieldVisuals() {
-        // Resetear slots
         document.querySelectorAll('.player-slot').forEach(s => {
             const pos = s.id.split('-')[1];
             s.innerHTML = `<span style="font-size:10px; font-weight:bold; color:white;">${pos}</span>`;
@@ -398,13 +411,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     slot.style.background = "#001f5c";
                     slot.style.border = "2px solid #ffdd00";
                     slot.classList.add('filled');
-                    slot.onclick = () => window.sellPlayer(p.Id_Jugador); 
+                    
+                    // Solo permitir vender si no está bloqueado
+                    if (!isFantasyLocked) {
+                        slot.onclick = () => window.sellPlayer(p.Id_Jugador); 
+                    }
                 }
             });
         });
     }
 
     window.saveFantasyTeam = function() {
+        if (isFantasyLocked) return alert("No se puede guardar. Jornada cerrada.");
+
         let allIds = [];
         Object.values(myFantasyTeam).forEach(arr => arr.forEach(p => allIds.push(p.Id_Jugador)));
 
@@ -429,6 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ... (El resto de funciones cargarPartidos, selectPred, etc. se mantienen igual) ...
     function cargarPartidos(idQuiniela, jornada) {
         kingnielarContentArea.innerHTML = "<p style='color:white; text-align:center;'>Cargando...</p>";
         fetch(`php/quiniela_partidos.php?id_quiniela=${idQuiniela}&jornada=${jornada}`)
@@ -580,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }); 
     }
 
+    // --- CLASIFICACIÓN ---
     function renderClasificacionTab() {
         if(!quinielaActiva) return;
         const jornadaActual = jornadaSelect.value || 'Jornada 1';
@@ -592,14 +613,47 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(url).then(r => r.json()).then(data => {
             if(data.success) {
                 document.getElementById('total-participants').textContent = data.ranking.length;
-                const headersHtml = `<tr><th>Pos</th><th>Usuario</th><th>Total</th><th>J1</th><th>J2</th><th>J3</th><th>Final</th></tr>`;
+                
+                // NUEVOS ENCABEZADOS (16vos, 8vos, 4tos, Semis, Final)
+                const headersHtml = `
+                    <tr>
+                        <th>Pos</th>
+                        <th>Usuario</th>
+                        <th>Total</th>
+                        <th>J1</th>
+                        <th>J2</th>
+                        <th>J3</th>
+                        <th>16vos</th>
+                        <th>8vos</th>
+                        <th>4tos</th>
+                        <th>Semis</th>
+                        <th>Final</th>
+                    </tr>`;
                 document.querySelectorAll('.leaderboard-table thead').forEach(th => th.innerHTML = headersHtml);
+                
                 const tbody = document.getElementById('general-rank-body');
                 const userBody = document.getElementById('user-rank-body');
                 tbody.innerHTML = ""; userBody.innerHTML = "";
+                
                 data.ranking.forEach((u, index) => {
                     const crown = u.Corona ? `<img src="${u.Corona}" class="crown-badge">` : '';
-                    const rowHtml = `<tr><td>#${index + 1}</td><td class="user-cell"><img src="${u.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic"><div class="name-container"><span>${u.Nombre_Usuario}</span>${crown}</div></td><td><strong>${u.PuntosTotales}</strong></td><td>${u.Pts_J1}</td><td>${u.Pts_J2}</td><td>${u.Pts_J3}</td><td>${u.Pts_Elim}</td></tr>`;
+                    const rowHtml = `
+                        <tr>
+                            <td>#${index + 1}</td>
+                            <td class="user-cell">
+                                <img src="${u.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic">
+                                <div class="name-container"><span>${u.Nombre_Usuario}</span>${crown}</div>
+                            </td>
+                            <td><strong>${u.PuntosTotales}</strong></td>
+                            <td>${u.Pts_J1}</td>
+                            <td>${u.Pts_J2}</td>
+                            <td>${u.Pts_J3}</td>
+                            <td>${u.Pts_16 || 0}</td>
+                            <td>${u.Pts_8 || 0}</td>
+                            <td>${u.Pts_4 || 0}</td>
+                            <td>${u.Pts_Semi || 0}</td>
+                            <td>${u.Pts_Final || 0}</td>
+                        </tr>`;
                     tbody.innerHTML += rowHtml;
                     if(parseInt(u.Id_Usuario) === currentUser.id) { userBody.innerHTML = rowHtml; }
                 });
