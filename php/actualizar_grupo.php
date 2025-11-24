@@ -3,60 +3,63 @@ header('Content-Type: application/json');
 require 'conexion.php';
 session_start();
 
-// Depuración (opcional, puedes borrarlo luego)
-file_put_contents('debug_update.txt', print_r($_POST, true));
-
+// 1. Recibir datos
 $userId = $_SESSION['user_id'] ?? 0;
 $idQuiniela = isset($_POST['id_quiniela']) ? intval($_POST['id_quiniela']) : 0;
-$nuevoNombre = $_POST['nombre'] ?? '';
+$nuevoNombre = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
 
+// 2. Validación básica
 if (!$userId || !$idQuiniela || empty($nuevoNombre)) {
-    echo json_encode(['success' => false, 'message' => 'Datos incompletos']); exit;
+    echo json_encode(['success' => false, 'message' => 'Datos vacíos o sesión expirada']);
+    exit;
 }
 
 try {
     $fotoPath = null;
-    
-    // Procesar Foto
+    $sql = "";
+    $params = [];
+
+    // 3. Lógica de Foto (Opcional)
     if (isset($_FILES['foto_grupo']) && $_FILES['foto_grupo']['error'] === UPLOAD_ERR_OK) {
         $ext = strtolower(pathinfo($_FILES['foto_grupo']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+        
         if (in_array($ext, $allowed)) {
             $newName = "group_" . $idQuiniela . "_" . time() . "." . $ext;
             $target = "../uploads/groups/" . $newName;
             if (!is_dir("../uploads/groups/")) mkdir("../uploads/groups/", 0777, true);
+            
             if (move_uploaded_file($_FILES['foto_grupo']['tmp_name'], $target)) {
                 $fotoPath = "uploads/groups/" . $newName;
             }
         }
     }
 
-    // ACTUALIZAR BD (TABLA EN MAYÚSCULAS)
-    $sql = "UPDATE QUINIELA SET Nombre_Quiniela = ?";
-    $params = [$nuevoNombre];
-
+    // 4. Construcción de Query Segura
     if ($fotoPath) {
-        $sql .= ", Foto_Grupo = ?";
-        $params[] = $fotoPath;
+        $sql = "UPDATE QUINIELA SET Nombre_Quiniela = ?, Foto_Grupo = ? WHERE Id_Quiniela = ?";
+        $params = [$nuevoNombre, $fotoPath, $idQuiniela];
+    } else {
+        $sql = "UPDATE QUINIELA SET Nombre_Quiniela = ? WHERE Id_Quiniela = ?";
+        $params = [$nuevoNombre, $idQuiniela];
     }
 
-    $sql .= " WHERE Id_Quiniela = ?";
-    $params[] = $idQuiniela;
-
+    // 5. Ejecución
     $stmt = $pdo->prepare($sql);
-    
     if ($stmt->execute($params)) {
         echo json_encode([
             'success' => true, 
-            'message' => 'Grupo actualizado', 
+            'message' => 'Actualizado correctamente',
             'foto' => $fotoPath,
-            'nuevo_nombre' => $nuevoNombre
+            'nombre' => $nuevoNombre
         ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Error al ejecutar UPDATE']);
+        // Capturar error exacto de SQL
+        $errorInfo = $stmt->errorInfo();
+        echo json_encode(['success' => false, 'message' => 'Error SQL: ' . $errorInfo[2]]);
     }
 
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Error SQL: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Excepción: ' . $e->getMessage()]);
 }
 ?>

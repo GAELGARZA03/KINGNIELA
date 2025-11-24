@@ -1,5 +1,5 @@
 Array
 (
-    [id_quiniela] => 16
-    [nombre] => YA PORFIN AFI
+    [id_quiniela] => 14
+    [nombre] => DIOSITO PLIS
 )

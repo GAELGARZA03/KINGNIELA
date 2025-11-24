@@ -1,0 +1,18 @@
+Array
+(
+    [id_quiniela] => 13
+    [nombre] => PORFAAA
+)
+Array
+(
+    [foto_grupo] => Array
+        (
+            [name] => batman_ver7_xxlg_1024x1024@2x.jpg
+            [full_path] => batman_ver7_xxlg_1024x1024@2x.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php84B5.tmp
+            [error] => 0
+            [size] => 524193
+        )
+
+)

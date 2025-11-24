@@ -89,9 +89,9 @@
                             <div id="difficulty-section" class="form-section hidden">
                                 <label class="section-label">Dificultad</label>
                                 <select class="input-full" id="select-difficulty">
-                                    <option value="facil">Aficionado</option>
-                                    <option value="medio">Profesional</option>
-                                    <option value="dificil">Leyenda</option>
+                                    <option value="Aficionado">Aficionado</option>
+                                    <option value="Profesional">Profesional</option>
+                                    <option value="Leyenda">Leyenda</option>
                                 </select>
                             </div>
                             <div class="form-section">
@@ -173,38 +173,8 @@
                         </div>
                     </div>
 
-                    <div id="tab-configuracion" class="tab-content hidden">
-                        <div class="config-form">
-                            <div class="config-photo-section">
-                                <img src="Imagenes/mundial_2026.png" alt="Grupo" class="profile-pic big" id="config-group-img">
-                                <button class="btn-secondary btn-small">Cambiar Foto</button>
-                            </div>
-                            
-                            <div class="form-section">
-                                <label class="section-label">Nombre de la Quiniela</label>
-                                <input type="text" id="config-group-name" class="input-full">
-                            </div>
-                             <div class="form-section">
-                                <label class="section-label">Descripción</label>
-                                <textarea id="config-group-desc" class="input-full" rows="3"></textarea>
-                            </div>
-
-                            <h3>Miembros</h3>
-                            <div class="members-manage-list" id="config-members-list">
-                                </div>
-
-                            <div class="form-actions">
-                                <button class="btn-cancel">Deshacer</button>
-                                <button class="btn-primary">Guardar Cambios</button>
-                            </div>
-                             <div style="margin-top: 30px; border-top: 1px solid rgba(255,77,77,0.3); padding-top: 20px;">
-                                <button class="btn-cancel" style="border-color: #ff4d4d; color: #ff4d4d;">Salir de la Quiniela</button>
-                                <button class="btn-primary" style="background-color: #ff4d4d; color: white; float: right;">Eliminar Quiniela</button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div> </div>
+                    </div> 
+            </div>
         </div>
     </main>
 
@@ -217,6 +187,7 @@
             <button class="btn-primary btn-full" id="btn-confirm-members">Agregar</button>
         </div>
     </div>
+
     <div id="successModal" class="modal hidden">
         <div class="modal-content success-content">
             <h3>¡Quiniela Creada!</h3>
@@ -229,8 +200,8 @@
     <footer><p>&copy; 2025 Kingniela. Todos los derechos reservados.</p></footer>
     <img class="Corona_fondo" src="Imagenes/Corona_.png" alt=""><img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
 
-    <script src="Quiniela.js"></script>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/socket.js"></script>
+    <script src="Quiniela.js"></script>
 </body>
 </html>

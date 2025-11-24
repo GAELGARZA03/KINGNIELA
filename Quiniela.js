@@ -175,44 +175,80 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- GESTIÓN DE MIEMBROS (NUEVA FUNCIÓN) ---
+    // ... (dentro de Quiniela.js) ...
+
+    // ==========================================================
+    // FUNCIÓN: GESTIÓN DE MIEMBROS (CON CORONAS Y PERMISOS DE ADMIN)
+    // ==========================================================
     window.cargarMiembrosConfig = function(idQuiniela) {
         const listContainer = document.getElementById('config-members-list');
         if (!listContainer) return;
-        listContainer.innerHTML = "<p style='text-align:center; color:#ccc;'>Cargando miembros...</p>";
+        
+        listContainer.innerHTML = "<p style='text-align:center; color:#ccc;'>Cargando...</p>";
         
         fetch(`php/obtener_miembros.php?id_quiniela=${idQuiniela}`)
             .then(r => r.json())
             .then(res => {
                 listContainer.innerHTML = "";
+                
                 if(res.success) {
-                    if(res.miembros.length === 0) {
-                        listContainer.innerHTML = "<p style='text-align:center; color:#ccc; font-size:12px;'>Solo estás tú.</p>";
-                    } else {
-                        res.miembros.forEach(m => {
-                            const isMe = m.es_propio;
-                            const deleteBtn = isMe ? '' : `<button class="btn-remove-member" onclick="removeMember(${m.Id_Usuario})">Eliminar</button>`;
-                            const item = document.createElement('div');
-                            item.className = 'member-manage-item';
-                            item.innerHTML = `
-                                <div class="member-info-block">
-                                    <img src="${m.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic">
-                                    <span>${m.Nombre_Usuario} ${isMe ? '(Tú)' : ''}</span>
-                                </div>
-                                ${deleteBtn}
-                            `;
-                            listContainer.appendChild(item);
-                        });
+                    if(!res.miembros || res.miembros.length === 0) {
+                        listContainer.innerHTML = "<p style='text-align:center; color:#ccc;'>No hay miembros.</p>";
+                        return;
                     }
+
+                    // Verificamos si YO soy el admin
+                    const yoSoyAdmin = res.soy_admin; 
+
+                    res.miembros.forEach(m => {
+                        const esTu = m.es_propio; 
+                        const esAdminDelGrupo = m.es_admin; // Si este usuario es el admin
+                        
+                        // 1. Lógica de Botón Eliminar:
+                        // - Solo aparece si YO soy el admin.
+                        // - No puedo eliminarme a mí mismo (eso es "Salir").
+                        // - No puedo eliminar al admin (redundante pero seguro).
+                        let deleteBtn = '';
+                        if (yoSoyAdmin && !esTu && !esAdminDelGrupo) {
+                            deleteBtn = `<button class="btn-remove-member" onclick="removeMember(${m.id})" style="background:rgba(255, 77, 77, 0.2); color:#ff4d4d; border:1px solid #ff4d4d; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:12px;">Eliminar</button>`;
+                        }
+
+                        // 2. Lógica de Corona:
+                        const crownHtml = m.corona ? `<img src="${m.corona}" class="crown-badge" title="Corona Activa" style="width:18px; height:18px; margin-left:5px; vertical-align:middle;">` : '';
+
+                        // 3. Etiqueta de Admin (opcional, visual)
+                        const adminLabel = esAdminDelGrupo ? '<span style="font-size:10px; color:#ffdd00; border:1px solid #ffdd00; padding:2px 4px; border-radius:4px; margin-left:5px;">ADMIN</span>' : '';
+
+                        const item = document.createElement('div');
+                        item.className = 'member-manage-item';
+                        item.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);";
+                        
+                        item.innerHTML = `
+                            <div class="member-info-block" style="display:flex; align-items:center; gap:10px;">
+                                <img src="${m.avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic" style="width:40px;height:40px;border-radius:50%;object-fit:cover; border:2px solid #001f5c;">
+                                <div style="display:flex; flex-direction:column;">
+                                    <div style="display:flex; align-items:center;">
+                                        <span style="color:white; font-weight:bold; font-size:14px;">${m.nombre} ${esTu ? '(Tú)' : ''}</span>
+                                        ${crownHtml}
+                                        ${adminLabel}
+                                    </div>
+                                </div>
+                            </div>
+                            ${deleteBtn}
+                        `;
+                        listContainer.appendChild(item);
+                    });
                 } else {
                     listContainer.innerHTML = `<p style='color:red; text-align:center;'>Error: ${res.message}</p>`;
                 }
             })
             .catch(err => {
                 console.error(err);
-                listContainer.innerHTML = "<p style='color:red; text-align:center;'>Error de conexión.</p>";
+                listContainer.innerHTML = "<p style='color:red; text-align:center;'>Error de conexión</p>";
             });
     }
+
+    // ... (resto del código) ...
 
     // --- ABRIR MODAL CONFIGURACIÓN ---
     if(btnConfigGroup) {
