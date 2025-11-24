@@ -1,5 +1,5 @@
 // ==========================================
-// CONFIGURACIÓN CENTRAL (Edita aquí tu IP)
+// CONFIGURACIÓN CENTRAL
 // ==========================================
 // Cambia 'localhost' por tu IP (ej. '192.168.1.50') para probar en otros dispositivos
 window.SERVER_URL = 'http://localhost:3000'; 
@@ -9,6 +9,15 @@ window.SERVER_URL = 'http://localhost:3000';
 const currentUserGlobal = JSON.parse(localStorage.getItem('kingniela_user'));
 
 if (currentUserGlobal) {
+    
+    // --- NUEVO: ACTUALIZAR INTERFAZ (HEADER) ---
+    // Buscamos la imagen de perfil en la barra de navegación y la actualizamos
+    const headerProfileImg = document.querySelector('.user-actions .perfil img');
+    if (headerProfileImg && currentUserGlobal.avatar) {
+        headerProfileImg.src = currentUserGlobal.avatar;
+    }
+    // -------------------------------------------
+
     // Si no existe una conexión previa, la creamos usando la URL global
     if (!window.socket) {
         console.log("🔄 Iniciando conexión global al Socket en: " + window.SERVER_URL);

@@ -35,20 +35,34 @@
         </div>
     </header>
 
-    <main>
+    <main style="flex-direction: column; gap: 30px;">
+        
+        <div class="sim-card" style="width: 100%; max-width: 900px;">
+            <h1>Resultados del Mundial 2026</h1>
+            <p style="font-size: 14px; color: #ccc; margin-bottom: 20px;">Consulta las tablas de grupos y el cuadro eliminatorio en tiempo real.</p>
+            
+            <button id="btn-ver-resumen" class="btn-blue" style="width: 100%; background-color: #1a24ad; border: 1px solid white;">
+                📊 Ver Resumen del Torneo
+            </button>
+
+            <div id="resumen-area" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                </div>
+        </div>
+
         <div id="access-key-card" class="sim-card">
-            <h1>CLAVE DE ACCESO</h1>
-            <label for="access-key">Ingresa clave:</label>
-            <input type="text" id="access-key" placeholder="123#$A">
+            <h1>PANEL DE CONTROL</h1>
+            <label for="access-key">Ingresa clave de Administrador para simular:</label>
+            <input type="password" id="access-key" placeholder="******">
             <button id="ingresar-btn" class="btn-yellow">INGRESAR</button>
         </div>
 
         <div id="simulator-card" class="sim-card" style="display: none;">
-            <h1>Simulador FIFA WORLD CUP 2026</h1>
+            <h1 style="color: #ffdd00;">Simular Partidos</h1>
+            
             <div class="jornada-list">
                 <div class="jornada-item">
                     <h2>Jornada 1</h2>
-                    <button class="btn-yellow simulated">Simulado</button>
+                    <button class="btn-blue">Simular</button>
                 </div>
                 <div class="jornada-item">
                     <h2>Jornada 2</h2>
@@ -94,7 +108,7 @@
     <img class="tacha_fondo" src="Imagenes/TACHA.png" alt="">
     
     <script src="Simulador.js"></script>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="js/socket.js"></script>
 </body>
 </html>
