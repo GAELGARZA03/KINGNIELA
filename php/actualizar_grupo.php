@@ -3,12 +3,11 @@ header('Content-Type: application/json');
 require 'conexion.php';
 session_start();
 
-// --- DEBUG: Ver qué llega ---
-$log = "UPDATE Request: " . print_r($_POST, true);
-file_put_contents('debug_update.txt', $log, FILE_APPEND);
+// Depuración (opcional, puedes borrarlo luego)
+file_put_contents('debug_update.txt', print_r($_POST, true));
 
 $userId = $_SESSION['user_id'] ?? 0;
-$idQuiniela = $_POST['id_quiniela'] ?? 0;
+$idQuiniela = isset($_POST['id_quiniela']) ? intval($_POST['id_quiniela']) : 0;
 $nuevoNombre = $_POST['nombre'] ?? '';
 
 if (!$userId || !$idQuiniela || empty($nuevoNombre)) {
@@ -16,8 +15,9 @@ if (!$userId || !$idQuiniela || empty($nuevoNombre)) {
 }
 
 try {
-    // 1. Procesar Foto (Si se subió)
     $fotoPath = null;
+    
+    // Procesar Foto
     if (isset($_FILES['foto_grupo']) && $_FILES['foto_grupo']['error'] === UPLOAD_ERR_OK) {
         $ext = strtolower(pathinfo($_FILES['foto_grupo']['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
@@ -31,8 +31,8 @@ try {
         }
     }
 
-    // 2. Actualizar Base de Datos (Tabla 'quiniela' en minúsculas)
-    $sql = "UPDATE quiniela SET Nombre_Quiniela = ?";
+    // ACTUALIZAR BD (TABLA EN MAYÚSCULAS)
+    $sql = "UPDATE QUINIELA SET Nombre_Quiniela = ?";
     $params = [$nuevoNombre];
 
     if ($fotoPath) {
@@ -44,15 +44,16 @@ try {
     $params[] = $idQuiniela;
 
     $stmt = $pdo->prepare($sql);
+    
     if ($stmt->execute($params)) {
         echo json_encode([
             'success' => true, 
             'message' => 'Grupo actualizado', 
             'foto' => $fotoPath,
-            'debug_info' => 'Filas afectadas: ' . $stmt->rowCount()
+            'nuevo_nombre' => $nuevoNombre
         ]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Error al ejecutar UPDATE en BD']);
+        echo json_encode(['success' => false, 'message' => 'Error al ejecutar UPDATE']);
     }
 
 } catch (Exception $e) {

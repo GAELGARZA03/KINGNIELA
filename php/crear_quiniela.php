@@ -1,62 +1,94 @@
 <?php
 header('Content-Type: application/json');
 require 'conexion.php';
-require 'crown_helper.php';
+require 'crown_helper.php'; // Asegúrate de que este helper exista, si no, coméntalo
 session_start();
 
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['success' => false, 'message' => 'No autorizado']);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
 $input = json_decode(file_get_contents('php://input'), true);
+
 $nombre = $input['nombre'] ?? '';
 $tipo = $input['tipo'] ?? 'clasico';
-$dificultad = $input['dificultad'] ?? 'Aficionado';
+$rawDificultad = $input['dificultad'] ?? 'Aficionado';
 $amigos = $input['amigos'] ?? [];
-$userId = $_SESSION['user_id'] ?? 0;
 
-if (!$userId || empty($nombre)) {
-    echo json_encode(['success' => false, 'message' => 'Datos incompletos']); exit;
+if (empty($nombre)) {
+    echo json_encode(['success' => false, 'message' => 'Faltan datos obligatorios']);
+    exit;
+}
+
+// --- LÓGICA DE DIFICULTAD CORREGIDA ---
+// 1. Mapa de alias (si el frontend manda "facil", lo convertimos)
+$mapa = [
+    'facil' => 'Aficionado',
+    'medio' => 'Profesional',
+    'dificil' => 'Leyenda'
+];
+
+// 2. Normalizamos a minúsculas para buscar en el mapa
+$key = strtolower($rawDificultad);
+
+// 3. Decisión final
+if (isset($mapa[$key])) {
+    // Si viene "facil", "medio", etc.
+    $dificultadFinal = $mapa[$key];
+} elseif (in_array($rawDificultad, ['Aficionado', 'Profesional', 'Leyenda'])) {
+    // Si ya viene correcto ("Leyenda", "Aficionado") lo usamos directo
+    $dificultadFinal = $rawDificultad;
+} else {
+    // Default de seguridad
+    $dificultadFinal = 'Aficionado';
 }
 
 try {
     $pdo->beginTransaction();
 
-    // Generar Código Único
+    // 1. Generar Código
     $codigo = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
 
-    // 1. Insertar Quiniela (Tabla 'quiniela')
-    $stmt = $pdo->prepare("INSERT INTO quiniela (Nombre_Quiniela, Tipo_Quiniela, Codigo_Acceso, Id_Creador) VALUES (?, ?, ?, ?)");
+    // 2. Insertar Quiniela (TABLAS EN MAYÚSCULAS como en tu versión previa)
+    $stmt = $pdo->prepare("INSERT INTO QUINIELA (Nombre_Quiniela, Tipo_Quiniela, Codigo_Acceso, Id_Creador, Foto_Grupo) VALUES (?, ?, ?, ?, 'Imagenes/mundial_2026.png')");
     $stmt->execute([$nombre, $tipo, $codigo, $userId]);
     $idQuiniela = $pdo->lastInsertId();
 
-    // 2. Insertar Creador como Integrante (Tabla 'quiniela_integrantes')
-    $stmtInt = $pdo->prepare("INSERT INTO quiniela_integrantes (Id_Quiniela, Id_Usuario) VALUES (?, ?)");
+    // 3. Insertar Creador en Integrantes
+    $stmtInt = $pdo->prepare("INSERT INTO QUINIELA_INTEGRANTES (Id_Quiniela, Id_Usuario) VALUES (?, ?)");
     $stmtInt->execute([$idQuiniela, $userId]);
 
-    // 3. Insertar Amigos
+    // 4. Insertar Amigos
+    // Filtramos duplicados por si acaso
+    $amigos = array_unique($amigos);
     foreach ($amigos as $idAmigo) {
-        $stmtInt->execute([$idQuiniela, $idAmigo]);
+        // Evitar insertarse a sí mismo de nuevo
+        if(intval($idAmigo) !== intval($userId)){
+            $stmtInt->execute([$idQuiniela, $idAmigo]);
+        }
     }
 
-    // 4. Configuración Específica (Tablas 'quiniela_k' o 'quiniela_f')
+    // 5. Configuración Específica
     if ($tipo === 'kingniela') {
-        // CORRECCIÓN: Tabla 'quiniela_k' en minúsculas
-        $stmtK = $pdo->prepare("INSERT INTO quiniela_k (Id_Quiniela, Dificultad) VALUES (?, ?)");
-        $stmtK->execute([$idQuiniela, $dificultad]);
+        $stmtK = $pdo->prepare("INSERT INTO QUINIELA_K (Id_Quiniela, Dificultad) VALUES (?, ?)");
+        $stmtK->execute([$idQuiniela, $dificultadFinal]);
     } else {
-        // CORRECCIÓN: Tabla 'quiniela_f' en minúsculas
-        $stmtF = $pdo->prepare("INSERT INTO quiniela_f (Id_Quiniela, Presupuesto_Inicial) VALUES (?, 100.00)");
+        $stmtF = $pdo->prepare("INSERT INTO QUINIELA_F (Id_Quiniela, Presupuesto_Inicial) VALUES (?, 100.00)");
         $stmtF->execute([$idQuiniela]);
     }
 
-    // --- LOGRO: EL COMIENZO ---
-    desbloquearCorona($pdo, $userId, 'El comienzo');
-    // ---------------------------
+    // Logro (Si tienes la función)
+    if(function_exists('desbloquearCorona')) {
+        desbloquearCorona($pdo, $userId, 'El comienzo');
+    }
 
     $pdo->commit();
     echo json_encode(['success' => true, 'codigo' => $codigo]);
 
 } catch (Exception $e) {
     $pdo->rollBack();
-    // Guardar error en log para depurar si sigue fallando
-    file_put_contents('error_log_crear.txt', $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Error en BD: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Error BD: ' . $e->getMessage()]);
 }
 ?>

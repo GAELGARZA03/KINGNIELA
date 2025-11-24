@@ -1,5 +1,5 @@
-UPDATE Request: Array
+Array
 (
-    [id_quiniela] => 5
-    [nombre] => Fantasy
+    [id_quiniela] => 16
+    [nombre] => YA PORFIN AFI
 )
