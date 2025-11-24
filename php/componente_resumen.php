@@ -2,7 +2,6 @@
 require 'conexion.php';
 
 // --- 1. OBTENER DATOS GENERALES DE GRUPOS ---
-// Calculamos puntos, DG y GF para TODOS los equipos
 $sql = "
     SELECT e.Id_Equipo, e.Nombre_Equipo, e.Escudo, e.Grupo,
     SUM(CASE 
@@ -27,16 +26,16 @@ $sql = "
 $stmt = $pdo->query($sql);
 $equipos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Agrupar equipos por su Grupo (A, B, C...)
+// Agrupar equipos por su Grupo
 $grupos = [];
 foreach ($equipos as $eq) {
     $grupos[$eq['Grupo']][] = $eq;
 }
 
-// Calcular terceros lugares para la tabla de "Mejores 3ros"
+// Calcular terceros lugares
 $terceros = [];
 foreach ($grupos as $g => $lista) {
-    if (isset($lista[2])) { // El índice 2 es el 3er lugar (0, 1, 2)
+    if (isset($lista[2])) { // El índice 2 es el 3er lugar
         $terceros[] = $lista[2];
     }
 }
@@ -62,7 +61,7 @@ $partidosElim = $stmtElim->fetchAll(PDO::FETCH_ASSOC);
 
 $fases = [
     'Dieciseisavos de final' => [], 'Octavos de final' => [],
-    'Cuartos de final' => [], 'Semifinal' => [], 'Final' => []
+    'Cuartos de final' => [], 'Semifinal' => [], 'Final' => [], 'Tercer Puesto' => []
 ];
 foreach ($partidosElim as $pe) {
     if (isset($fases[$pe['Fase']])) $fases[$pe['Fase']][] = $pe;
@@ -70,13 +69,12 @@ foreach ($partidosElim as $pe) {
 ?>
 
 <style>
-    /* Estilos compactos específicos para este componente */
     .resumen-wrapper { color: white; text-align: center; font-family: 'Montserrat', sans-serif; }
     
     /* Grid de Grupos */
     .group-grid { 
         display: grid; 
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
         gap: 10px; 
         margin-bottom: 20px; 
     }
@@ -98,7 +96,7 @@ foreach ($partidosElim as $pe) {
     .mini-table { width: 100%; font-size: 11px; border-collapse: collapse; }
     .mini-table td, .mini-table th { padding: 2px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .mini-table .t-left { text-align: left; }
-    .q-zone { background: rgba(0, 255, 0, 0.1); } /* Zona de clasificación directa */
+    .q-zone { background: rgba(0, 255, 0, 0.1); } 
     
     /* Bracket */
     .bracket-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
@@ -118,8 +116,8 @@ foreach ($partidosElim as $pe) {
                     <?php foreach ($lista as $i => $e): ?>
                         <tr class="<?php echo ($i<2)?'q-zone':''; ?>">
                             <td class="t-left">
-                                <img src="../<?php echo $e['Escudo']; ?>" style="width:12px; vertical-align:middle;">
-                                <?php echo substr($e['Nombre_Equipo'], 0, 12); ?>
+                                <img src="<?php echo $e['Escudo']; ?>" style="width:12px; vertical-align:middle;">
+                                <?php echo substr($e['Nombre_Equipo'], 0, 14); ?>
                             </td>
                             <td><b><?php echo $e['Pts']; ?></b></td>
                         </tr>
@@ -129,14 +127,17 @@ foreach ($partidosElim as $pe) {
         <?php endforeach; ?>
     </div>
 
-    <h3 style="color:#ffdd00; margin: 20px 0 10px 0; border-bottom: 1px solid #ffdd00; display:inline-block;">Mejores 3ros (Top 8 pasan)</h3>
+    <h3 style="color:#ffdd00; margin: 20px 0 10px 0; border-bottom: 1px solid #ffdd00; display:inline-block;">Mejores 3ros</h3>
     <div style="overflow-x:auto; margin-bottom:20px;">
         <table class="mini-table" style="margin: 0 auto; max-width: 600px;">
             <tr style="background: #1a24ad;"><th>Pos</th><th class="t-left">Equipo</th><th>Gpo</th><th>Pts</th><th>DG</th><th>GF</th></tr>
             <?php foreach ($terceros as $idx => $eq): ?>
                 <tr style="background: <?php echo ($idx<8)?'rgba(0,255,0,0.2)':'rgba(255,0,0,0.2)'; ?>">
                     <td><?php echo $idx+1; ?></td>
-                    <td class="t-left"><?php echo $eq['Nombre_Equipo']; ?></td>
+                    <td class="t-left">
+                        <img src="<?php echo $eq['Escudo']; ?>" style="width:12px; vertical-align:middle;">
+                        <?php echo $eq['Nombre_Equipo']; ?>
+                    </td>
                     <td><?php echo $eq['Grupo']; ?></td>
                     <td><?php echo $eq['Pts']; ?></td>
                     <td><?php echo $eq['DG']; ?></td>

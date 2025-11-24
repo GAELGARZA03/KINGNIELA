@@ -7,20 +7,20 @@ document.addEventListener("DOMContentLoaded", function() {
     const keyInput = document.getElementById('access-key');
     const btnVerResumen = document.getElementById('btn-ver-resumen');
     const resumenArea = document.getElementById('resumen-area');
-    const botonesSimular = document.querySelectorAll('.btn-blue, .btn-yellow'); // Seleccionar todos
+    const botonesSimular = document.querySelectorAll('.btn-blue, .btn-yellow'); 
 
-    // --- 0. CARGAR ESTADO INICIAL (PERSISTENCIA DE BOTONES) ---
+    // --- 0. CARGAR ESTADO INICIAL (CORREGIDO) ---
     function cargarEstadoSimulacion() {
-        fetch('php/estado_simulacion.php')
+        // CORRECCIÓN AQUÍ: El archivo se llama 'estado_simulado.php' en tu carpeta
+        fetch('php/estado_simulado.php')
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 botonesSimular.forEach(btn => {
-                    // El título h2 está justo antes del botón
+                    if (!btn.parentElement.querySelector('h2')) return; // Saltar botones que no son de jornada
                     const faseTitulo = btn.parentElement.querySelector('h2').innerText;
                     
                     if (data.estados[faseTitulo] === true) {
-                        // Si ya está simulada, cambiamos estilo
                         marcarComoSimulado(btn);
                     }
                 });
@@ -29,9 +29,7 @@ document.addEventListener("DOMContentLoaded", function() {
         .catch(e => console.error("Error cargando estado:", e));
     }
     
-    // Llamar al iniciar
     cargarEstadoSimulacion();
-
 
     // 1. VALIDACIÓN DE CLAVE
     ingresarBtn.addEventListener('click', function() {
@@ -65,10 +63,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // 3. LÓGICA DE SIMULACIÓN
     botonesSimular.forEach(btn => {
-        if (btn.id === 'btn-ver-resumen') return;
+        if (btn.id === 'btn-ver-resumen' || btn.id === 'ingresar-btn') return;
 
         btn.addEventListener('click', function() {
-            if (this.classList.contains('simulated')) return; // Evitar re-click si ya está amarillo
+            if (this.classList.contains('simulated')) return;
 
             const faseTitulo = this.parentElement.querySelector('h2').innerText;
             const textoOriginal = this.innerText;
@@ -77,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function() {
             this.disabled = true;
             this.style.backgroundColor = "#ccc";
 
-            // 3.1 Simular Resultados
             fetch('php/simulador.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -92,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     data.data.forEach(r => msg += `${r.partido}: ${r.resultado}\n`);
                     alert(msg);
 
-                    // 3.2 Lógica de Avance de Fase
+                    // LOGICA DE AVANCE
                     if (faseTitulo === 'Jornada 3') {
                         generarCuadroEliminatorio();
                     } else if (['Dieciseisavos de final', 'Octavos de final', 'Cuartos de final', 'Semifinal'].includes(faseTitulo)) {
@@ -123,17 +120,15 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // --- FUNCIONES AUXILIARES ---
-
     function marcarComoSimulado(btn) {
         btn.innerText = "Simulado";
         btn.classList.remove('btn-blue');
         btn.classList.add('btn-yellow', 'simulated');
-        btn.style.backgroundColor = ""; // Limpiar inline style
-        btn.disabled = true; // Bloquear click
+        btn.style.backgroundColor = ""; 
+        btn.disabled = true;
     }
 
     function generarCuadroEliminatorio() {
-        // alert("Generando cuadro de eliminatorias...");
         fetch('php/generar_cuadro.php')
         .then(r => r.json())
         .then(data => {
@@ -143,6 +138,8 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function avanzarSiguienteRonda(faseActual) {
+        console.log("Intentando avanzar desde:", faseActual); // DEBUG
+        
         fetch('php/avanzar_torneo.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -150,11 +147,16 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(r => r.json())
         .then(data => {
+            console.log("Respuesta avance:", data); // DEBUG
             if(data.success) {
                 alert("¡Siguiente ronda lista! " + data.message);
+                // Opcional: Recargar para desbloquear el siguiente botón visualmente
+                location.reload(); 
             } else {
                 console.error("Error avanzando ronda:", data.message);
+                // Si dice que ya existen, es que ya se crearon.
             }
-        });
+        })
+        .catch(e => console.error("Error de red al avanzar:", e));
     }
 });
