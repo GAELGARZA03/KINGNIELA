@@ -1,0 +1,5 @@
+UPDATE Request: Array
+(
+    [id_quiniela] => 5
+    [nombre] => Fantasy
+)

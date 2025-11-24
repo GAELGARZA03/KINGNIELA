@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const membersListContainer = document.getElementById('members-list-container');
     const closeMembers = document.getElementById('close-members');
 
-    // MODAL DE CONFIGURACIÓN
+// --- INYECCIÓN DEL MODAL DE CONFIGURACIÓN ---
     let configModal = document.getElementById('configModal');
     if (!configModal) {
         const modalHTML = `
@@ -84,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
         configModal = document.getElementById('configModal');
     }
 
-    // Referencias del Modal Config
     const inpConfigName = document.getElementById('config-group-name');
     const imgConfigPreview = document.getElementById('config-group-preview');
     const inpConfigFile = document.getElementById('config-group-file');
@@ -252,28 +251,30 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(r => r.json())
             .then(res => {
                 if(res.success) {
-                    alert("Grupo actualizado. Filas afectadas: " + (res.filas_afectadas !== undefined ? res.filas_afectadas : 'N/A'));
+                    alert(res.message);
                     configModal.classList.add('hidden');
                     
-                    // Actualizar UI local
+                    // Actualizar datos locales
                     quinielaActiva.Nombre_Quiniela = newName;
                     if(res.foto) quinielaActiva.Foto_Grupo = res.foto;
                     
+                    // Actualizar encabezado
                     document.getElementById('group-header-name').textContent = newName;
                     const headerImg = document.getElementById('group-header-img');
-                    if(headerImg && res.foto) headerImg.src = res.foto;
+                    if(headerImg && res.foto) headerImg.src = `${res.foto}?v=${new Date().getTime()}`;
                     
-                    cargarMisQuinielas();
+                    cargarMisQuinielas(); // Recargar barra lateral
                 } else {
-                    alert("Error del servidor: " + res.message);
+                    alert("Error: " + res.message);
                 }
             })
-            .catch(e => alert("Error de red al guardar."));
+            .catch(e => alert("Error al guardar cambios."));
         });
     }
 
     window.removeMember = function(idUsuario) {
         if(!confirm("¿Seguro que deseas eliminar a este miembro?")) return;
+        
         fetch('php/eliminar_miembro.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -282,11 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(r => r.json())
         .then(res => {
             if(res.success) {
-                // Recargar lista refrescando el modal
-                // (Disparamos el evento click para recargar la lista)
+                // Simular click para recargar la lista
                 const event = new Event('click');
                 btnConfigGroup.dispatchEvent(event);
-            } else alert("Error: " + res.message);
+            } else {
+                alert("Error: " + res.message);
+            }
         });
     }
 
@@ -898,5 +900,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if(tabId === 'tab-chat' && quinielaActiva) loadGroupChat(); 
     }
 
+
+
+
     cargarMisQuinielas();
+        // --- VERIFICADOR DE LOGROS AUTOMÁTICO ---
+    function checkAchievements() {
+        fetch('php/verificar_logros.php')
+            .then(r => r.json())
+            .then(data => {
+                // Opcional: Si data.success es true, podríamos notificar al usuario
+                // console.log("Logros verificados. Aciertos: " + data.aciertos);
+            })
+            .catch(e => console.error("Error verificando logros", e));
+    }
+
+    // Llamar al iniciar y cada vez que cargamos datos importantes
+    checkAchievements();
 });

@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 require 'conexion.php';
+require 'crown_helper.php'; // <--- AGREGAR
 session_start();
 
 $userId = $_SESSION['user_id'] ?? 0;
@@ -29,10 +30,7 @@ try {
     // 2. Validar Mercado Exclusivo
     $fasesExclusivas = ['Jornada 1', 'Jornada 2', 'Jornada 3'];
     if (in_array($jornada, $fasesExclusivas)) {
-        // Verificar ocupados por OTRO usuario (Id_Usuario != $userId)
         $placeholders = implode(',', array_fill(0, count($jugadoresIds), '?'));
-        
-        // La clave es: Id_Usuario != ? (Si soy yo, no cuenta como ocupado prohibido)
         $sqlCheck = "SELECT COUNT(*) FROM SELECCION_JUGADORES 
                      WHERE Id_Quiniela_F = ? AND Fase = ? AND Id_Usuario != ? 
                      AND Id_Jugador IN ($placeholders)";
@@ -58,15 +56,18 @@ try {
         $pdo->rollBack(); exit;
     }
 
-    // 4. Modificación: Borrar selección anterior para actualizarla
+    // 4. Actualizar selección
     $stmtDel = $pdo->prepare("DELETE FROM SELECCION_JUGADORES WHERE Id_Quiniela_F = ? AND Fase = ? AND Id_Usuario = ?");
     $stmtDel->execute([$idF, $jornada, $userId]);
 
-    // 5. Insertar nueva selección
     $stmtIns = $pdo->prepare("INSERT INTO SELECCION_JUGADORES (Fase, Id_Quiniela_F, Id_Jugador, Id_Usuario) VALUES (?, ?, ?, ?)");
     foreach ($jugadoresIds as $idJ) {
         $stmtIns->execute([$jornada, $idF, $idJ, $userId]);
     }
+    
+    // --- LOGRO: DE SHOPPING ---
+    desbloquearCorona($pdo, $userId, 'De Shopping');
+    // --------------------------
 
     $pdo->commit();
     echo json_encode(['success' => true, 'message' => '¡Equipo guardado exitosamente!']);

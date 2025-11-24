@@ -118,6 +118,25 @@ try {
     }
     unset($jug); // Romper referencia
 
+    // --- VERIFICACIÓN DE LOGROS FANTASY ---
+    $maxPuntosJugador = 0;
+    foreach ($miEquipo as $j) {
+        if (isset($j['Puntos']) && $j['Puntos'] !== null) {
+            if ($j['Puntos'] > $maxPuntosJugador) $maxPuntosJugador = $j['Puntos'];
+        }
+    }
+
+    // Logro: MVP (15 puntos con un jugador)
+    if ($maxPuntosJugador >= 15) {
+        desbloquearCorona($pdo, $userId, 'MVP');
+    }
+
+    // Logro: Dream team (100 puntos en una jornada)
+    // Nota: Asumimos que puntosTotales es la suma de la jornada actual que se está viendo
+    if ($puntosTotales >= 100) {
+        desbloquearCorona($pdo, $userId, 'Dream team');
+    }
+
     $presupuestoRestante = 100.00 - $gastoActual;
 
     $mercadoFinal = [];

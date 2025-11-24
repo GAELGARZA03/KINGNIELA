@@ -9,29 +9,25 @@ $currentUserId = $_SESSION['user_id'] ?? 0;
 if (!$idQuiniela) { echo json_encode(['success' => false, 'message' => 'Falta ID']); exit; }
 
 try {
+    // Usamos nombres de tablas en minúsculas para evitar errores de case-sensitivity
     $sql = "
         SELECT u.Id_Usuario, u.Nombre_Usuario, u.Avatar
-        FROM QUINIELA_INTEGRANTES qi
-        JOIN USUARIO u ON qi.Id_Usuario = u.Id_Usuario
+        FROM quiniela_integrantes qi
+        JOIN usuario u ON qi.Id_Usuario = u.Id_Usuario
         WHERE qi.Id_Quiniela = ?
     ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$idQuiniela]);
     $miembros = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Marcar al usuario actual (Tú)
     foreach ($miembros as &$m) {
         $m['es_propio'] = ($m['Id_Usuario'] == $currentUserId);
     }
 
-    // Si el array está vacío, avisar
-    if (empty($miembros)) {
-        // Opcional: Devolver mensaje de depuración
-        echo json_encode(['success' => true, 'miembros' => [], 'debug' => 'No se encontraron miembros en la tabla QUINIELA_INTEGRANTES para este ID.']);
-    } else {
-        echo json_encode(['success' => true, 'miembros' => $miembros]);
-    }
+    echo json_encode(['success' => true, 'miembros' => $miembros]);
 
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Error SQL: ' . $e->getMessage()]);
 }
 ?>
