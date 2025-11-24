@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Conexión Socket
+    const serverUrl = window.SERVER_URL || 'http://localhost:3000';
+    const socket = window.socket || io(serverUrl);
+
     // --- REFERENCIAS DOM ---
     const mainContentView = document.getElementById('main-menu-view');
     const quinielaListView = document.getElementById('quiniela-list-view');
@@ -13,14 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupView = document.getElementById('quiniela-group-view');
     const sidebarList = document.getElementById('sidebar-quinielas-list');
     
-    // Botones
+    // Botones Crear/Unirse
     const btnShowCreate = document.getElementById('btn-show-create');
     const btnCancelCreate = document.getElementById('btn-cancel-create');
     const btnCreateFinal = document.getElementById('btn-create-final');
     const btnOpenMembers = document.getElementById('btn-open-members');
     const btnConfirmMembers = document.getElementById('btn-confirm-members');
     const btnFinish = document.getElementById('btn-finish');
+    const btnJoinGroup = document.getElementById('btn-join-group'); // NUEVO
+    const inputJoinCode = document.getElementById('join-code-input'); // NUEVO
+    
+    // Botones Grupo
     const btnGuardarPredicciones = document.querySelector('#tab-kingnielar .btn-primary');
+    const groupChatBody = document.getElementById('group-chat-messages');
+    const groupChatInput = document.getElementById('group-message-input');
+    const btnSendGroup = document.querySelector('.chat-input-wrapper .send-btn');
 
     // Modales
     const membersModal = document.getElementById('membersModal');
@@ -29,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const successModal = document.getElementById('successModal');
     const generatedCodeDisplay = document.getElementById('generated-code');
     
-    // Inputs
+    // Inputs Crear
     const inpNombre = document.querySelector('#form-create-quiniela input[type="text"]');
     const radioKingniela = document.getElementById('tipo-kingniela');
     const radioClasico = document.getElementById('tipo-clasico');
@@ -55,6 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarList.innerHTML = ""; 
         const liAdd = document.createElement('li'); liAdd.id = 'crear__quiniela'; liAdd.textContent = '+';
         liAdd.addEventListener('click', () => {
+            // Salir de grupo socket si estaba dentro
+            if(quinielaActiva) socket.emit('leave_group', quinielaActiva.Id_Quiniela);
+            quinielaActiva = null;
+
             groupView.classList.add('hidden'); mainContentView.classList.remove('hidden');
             quinielaListView.classList.remove('hidden'); createQuinielaView.classList.add('hidden');
             document.querySelectorAll('.quiniela-sidebar-item').forEach(i => i.classList.remove('active-group'));
@@ -76,9 +91,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- NUEVO: UNIRSE A QUINIELA ---
+    if(btnJoinGroup) {
+        btnJoinGroup.addEventListener('click', () => {
+            const codigo = inputJoinCode.value.trim();
+            if(!codigo) return alert("Escribe un código");
+
+            fetch('php/unirse_quiniela.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ codigo: codigo })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if(res.success) {
+                    alert(res.message);
+                    inputJoinCode.value = "";
+                    cargarMisQuinielas(); // Refrescar para ver el nuevo grupo
+                } else {
+                    alert("Error: " + res.message);
+                }
+            })
+            .catch(e => console.error(e));
+        });
+    }
+
     // --- VISTA GRUPO ---
     function loadGroupView(quiniela) {
+        if (quinielaActiva) socket.emit('leave_group', quinielaActiva.Id_Quiniela);
         quinielaActiva = quiniela;
+        socket.emit('join_group', quiniela.Id_Quiniela);
+
         mainContentView.classList.add('hidden'); groupView.classList.remove('hidden');
         document.getElementById('group-header-name').textContent = quiniela.Nombre_Quiniela;
         document.getElementById('group-header-code').textContent = quiniela.Codigo_Acceso;
@@ -86,75 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
         clickTab('tab-kingnielar');
     }
 
-    // --- RENDER CLASIFICACIÓN (ACTUALIZADO CON COLUMNAS) ---
-    function renderClasificacionTab() {
-        if(!quinielaActiva) return;
-        
-        fetch(`php/quiniela_ranking.php?id_quiniela=${quinielaActiva.Id_Quiniela}`)
-        .then(r => r.json())
-        .then(data => {
-            if(data.success) {
-                document.getElementById('total-participants').textContent = data.ranking.length;
-                
-                // Actualizar encabezados de tabla dinámicamente
-                const headersHtml = `
-                    <tr>
-                        <th>Pos</th>
-                        <th>Usuario</th>
-                        <th>Total</th>
-                        <th>J1</th>
-                        <th>J2</th>
-                        <th>J3</th>
-                        <th>Final</th>
-                    </tr>
-                `;
-                
-                // Aplicar a ambas tablas (Usuario y General)
-                const tableHeads = document.querySelectorAll('.leaderboard-table thead');
-                tableHeads.forEach(th => th.innerHTML = headersHtml);
-
-                const tbody = document.getElementById('general-rank-body');
-                const userBody = document.getElementById('user-rank-body');
-                
-                tbody.innerHTML = "";
-                userBody.innerHTML = "";
-
-                data.ranking.forEach((u, index) => {
-                    const crown = u.Corona ? `<img src="${u.Corona}" class="crown-badge">` : '';
-                    
-                    const rowHtml = `
-                        <tr>
-                            <td>#${index + 1}</td>
-                            <td class="user-cell">
-                                <img src="${u.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic">
-                                <div class="name-container"><span>${u.Nombre_Usuario}</span>${crown}</div>
-                            </td>
-                            <td><strong>${u.PuntosTotales}</strong></td>
-                            <td>${u.Pts_J1}</td>
-                            <td>${u.Pts_J2}</td>
-                            <td>${u.Pts_J3}</td>
-                            <td>${u.Pts_Elim}</td>
-                        </tr>`;
-                    
-                    tbody.innerHTML += rowHtml;
-
-                    // Llenar tabla individual
-                    if(parseInt(u.Id_Usuario) === currentUser.id) {
-                        userBody.innerHTML = rowHtml;
-                    }
-                });
-            }
-        });
-    }
-
-    // --- RESTO DE FUNCIONES (Partidos, Guardar, Crear) ---
+    // --- RENDER PARTIDOS ---
     function renderKingnielarTab(quiniela) {
         if(jornadaSelect.innerHTML.trim() === "") {
             ['Jornada 1', 'Jornada 2', 'Jornada 3', 'Dieciseisavos de final', 'Octavos de final', 'Cuartos de final', 'Semifinal', 'Tercer Puesto', 'Final'].forEach(j => {
                 const opt = document.createElement('option'); opt.value = j; opt.textContent = j;
                 jornadaSelect.appendChild(opt);
             });
-            jornadaSelect.onchange = () => cargarPartidos(quiniela.Id_Quiniela, jornadaSelect.value);
+            jornadaSelect.onchange = () => {
+                cargarPartidos(quiniela.Id_Quiniela, jornadaSelect.value);
+                if(document.getElementById('tab-clasificacion').classList.contains('hidden') === false) renderClasificacionTab();
+            };
         }
         cargarPartidos(quiniela.Id_Quiniela, jornadaSelect.value || 'Jornada 1');
     }
@@ -257,63 +242,100 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else if (inputLocal) {
                     const inputVisit = card.querySelector('.input-visit');
-                    if(inputLocal.value !== '' && inputVisit.value !== '') {
-                        gL = inputLocal.value; gV = inputVisit.value;
-                    }
+                    if(inputLocal.value !== '' && inputVisit.value !== '') { gL = inputLocal.value; gV = inputVisit.value; }
                 }
                 if (gL !== null) predicciones.push({ id_partido: idPartido, local: gL, visitante: gV });
             });
 
-            if(predicciones.length === 0) return alert("No hay predicciones nuevas o editables.");
+            if(predicciones.length === 0) return alert("No hay predicciones nuevas.");
 
             fetch('php/guardar_predicciones.php', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id_quiniela: quinielaActiva.Id_Quiniela, predicciones: predicciones })
             })
             .then(r => r.json())
-            .then(res => {
-                if(res.success) alert("Guardado correctamente.");
-                else alert("Error: " + res.message);
-            });
+            .then(res => { if(res.success) alert("Guardado."); else alert("Error: " + res.message); });
         });
     }
 
-    // Funcionalidad Botones UI
-    if(btnShowCreate) btnShowCreate.addEventListener('click', () => { quinielaListView.classList.add('hidden'); createQuinielaView.classList.remove('hidden'); });
-    if(btnCancelCreate) btnCancelCreate.addEventListener('click', () => { createQuinielaView.classList.add('hidden'); quinielaListView.classList.remove('hidden'); });
-    if(radioKingniela) radioKingniela.addEventListener('change', () => difficultySection.classList.remove('hidden'));
-    if(radioClasico) radioClasico.addEventListener('change', () => difficultySection.classList.add('hidden'));
-    
-    if(btnOpenMembers) btnOpenMembers.addEventListener('click', () => {
-        fetch(`php/friends.php?user_id=${currentUser.id}`).then(r=>r.json()).then(d=>{
-            membersListContainer.innerHTML = "";
-            d.friends.forEach(f => {
-                const isChecked = amigosSeleccionados.includes(parseInt(f.id)) ? 'checked' : '';
-                membersListContainer.innerHTML += `<div class="member-item"><input type="checkbox" id="friend${f.id}" value="${f.id}" ${isChecked}><label for="friend${f.id}"><img src="${f.avatar||'Imagenes/I_Perfil.png'}" class="profile-pic"><span>${f.nombre}</span></label></div>`;
-            });
-            membersModal.classList.remove('hidden');
-        });
-    });
-    
-    if(btnConfirmMembers) btnConfirmMembers.addEventListener('click', () => {
-        amigosSeleccionados = Array.from(membersListContainer.querySelectorAll('input:checked')).map(cb => parseInt(cb.value));
-        membersModal.classList.add('hidden');
-    });
-    if(closeMembers) closeMembers.addEventListener('click', () => membersModal.classList.add('hidden'));
-
-    if(btnCreateFinal) btnCreateFinal.addEventListener('click', () => {
-        const nombre = inpNombre.value.trim();
-        if(!nombre) return alert("Nombre requerido");
-        fetch('php/crear_quiniela.php', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ nombre: nombre, tipo: radioKingniela.checked?'kingniela':'fantasy', dificultad: selectDifficulty.value, amigos: amigosSeleccionados })
-        }).then(r=>r.json()).then(resp => {
-            if(resp.success) {
-                generatedCodeDisplay.textContent = resp.codigo;
-                createQuinielaView.classList.add('hidden'); successModal.classList.remove('hidden'); cargarMisQuinielas();
+    // --- RENDER CLASIFICACIÓN ---
+    function renderClasificacionTab() {
+        if(!quinielaActiva) return;
+        const jornadaActual = jornadaSelect.value || 'Jornada 1';
+        fetch(`php/quiniela_ranking.php?id_quiniela=${quinielaActiva.Id_Quiniela}&jornada=${jornadaActual}`).then(r => r.json()).then(data => {
+            if(data.success) {
+                document.getElementById('total-participants').textContent = data.ranking.length;
+                const headersHtml = `<tr><th>Pos</th><th>Usuario</th><th>Total</th><th>J1</th><th>J2</th><th>J3</th><th>Final</th></tr>`;
+                document.querySelectorAll('.leaderboard-table thead').forEach(th => th.innerHTML = headersHtml);
+                const tbody = document.getElementById('general-rank-body');
+                const userBody = document.getElementById('user-rank-body');
+                tbody.innerHTML = ""; userBody.innerHTML = "";
+                data.ranking.forEach((u, index) => {
+                    const crown = u.Corona ? `<img src="${u.Corona}" class="crown-badge">` : '';
+                    const rowHtml = `<tr><td>#${index + 1}</td><td class="user-cell"><img src="${u.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic"><div class="name-container"><span>${u.Nombre_Usuario}</span>${crown}</div></td><td><strong>${u.PuntosTotales}</strong></td><td>${u.Pts_J1}</td><td>${u.Pts_J2}</td><td>${u.Pts_J3}</td><td>${u.Pts_Elim}</td></tr>`;
+                    tbody.innerHTML += rowHtml;
+                    if(parseInt(u.Id_Usuario) === currentUser.id) { userBody.innerHTML = rowHtml; }
+                });
             }
         });
+    }
+
+    // --- CHAT GRUPAL ---
+    socket.on('newGroupMessage', (msg) => {
+        if (quinielaActiva && parseInt(msg.Id_Quiniela) === parseInt(quinielaActiva.Id_Quiniela)) {
+            appendGroupMessage(msg);
+        }
     });
+
+    function loadGroupChat() {
+        if(!quinielaActiva) return;
+        groupChatBody.innerHTML = "<p style='text-align:center;color:#ccc;'>Cargando...</p>";
+        fetch(`php/chat_grupo.php?id_quiniela=${quinielaActiva.Id_Quiniela}`).then(r => r.json()).then(msgs => {
+            groupChatBody.innerHTML = "";
+            msgs.forEach(m => appendGroupMessage(m));
+            groupChatBody.scrollTop = groupChatBody.scrollHeight;
+        });
+    }
+
+    function appendGroupMessage(msg) {
+        const isMe = parseInt(msg.Id_Emisor) === currentUser.id;
+        const div = document.createElement('div');
+        div.className = `message ${isMe ? 'sent' : 'received'}`;
+        if(isMe) div.style.alignSelf = 'flex-end';
+
+        let infoHtml = '';
+        if(!isMe) {
+            const crown = msg.Corona ? `<img src="${msg.Corona}" class="crown-badge">` : '';
+            infoHtml = `<div style="display:flex; align-items:center; margin-bottom:5px;"><img src="${msg.Avatar || 'Imagenes/I_Perfil.png'}" class="profile-pic" style="width:20px; height:20px; margin-right:5px;"><div class="name-container" style="font-size:11px; color:#ffdd00;"><span>${msg.Nombre_Usuario}</span>${crown}</div></div>`;
+        }
+        const dateObj = msg.Fecha_Envio ? new Date(msg.Fecha_Envio) : new Date();
+        const timeStr = dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+        div.innerHTML = `<div class="message-content" style="background:${isMe?'#0f1b73':'#1a2cbd'}; border-radius:10px; padding:8px 12px;">${infoHtml}<p style="margin:0; font-size:13px;">${msg.Contenido}</p><span style="font-size:9px; opacity:0.7; display:block; text-align:right; margin-top:3px;">${timeStr}</span></div>`;
+        groupChatBody.appendChild(div);
+        groupChatBody.scrollTop = groupChatBody.scrollHeight;
+    }
+
+    if(btnSendGroup) btnSendGroup.onclick = sendGroupMessageAction;
+    if(groupChatInput) groupChatInput.onkeypress = (e) => { if(e.key === 'Enter') sendGroupMessageAction(); };
+
+    function sendGroupMessageAction() {
+        const text = groupChatInput.value.trim();
+        if(!text || !quinielaActiva) return;
+        const fd = new FormData(); fd.append('id_quiniela', quinielaActiva.Id_Quiniela); fd.append('content', text);
+        fetch('php/chat_grupo.php', { method: 'POST', body: fd }).then(r => r.json()).then(res => { if(res.success) groupChatInput.value = ""; });
+    }
+
+    // Creación de Quinielas (Resto del código UI...)
+    if(btnShowCreate) btnShowCreate.addEventListener('click', () => { quinielaListView.classList.add('hidden'); createQuinielaView.classList.remove('hidden'); amigosSeleccionados = []; inpNombre.value = ""; toggleDifficulty(); });
+    if(btnCancelCreate) btnCancelCreate.addEventListener('click', () => { createQuinielaView.classList.add('hidden'); quinielaListView.classList.remove('hidden'); });
+    function toggleDifficulty() { if(radioKingniela.checked) difficultySection.classList.remove('hidden'); else difficultySection.classList.add('hidden'); }
+    if(radioKingniela) radioKingniela.addEventListener('change', toggleDifficulty); if(radioClasico) radioClasico.addEventListener('change', toggleDifficulty);
+    if(btnOpenMembers) btnOpenMembers.addEventListener('click', () => { fetch(`php/friends.php?user_id=${currentUser.id}`).then(r=>r.json()).then(d=>{ renderMembersModalList(d.friends); membersModal.classList.remove('hidden'); }); });
+    function renderMembersModalList(friends) { membersListContainer.innerHTML = ""; if(!friends) return; friends.forEach(f => { const isChecked = amigosSeleccionados.includes(parseInt(f.id)) ? 'checked' : ''; membersListContainer.innerHTML += `<div class="member-item"><input type="checkbox" id="friend${f.id}" value="${f.id}" ${isChecked}><label for="friend${f.id}"><img src="${f.avatar||'Imagenes/I_Perfil.png'}" class="profile-pic"><span>${f.nombre}</span></label></div>`; }); }
+    if(btnConfirmMembers) btnConfirmMembers.addEventListener('click', () => { amigosSeleccionados = Array.from(membersListContainer.querySelectorAll('input:checked')).map(cb => parseInt(cb.value)); membersModal.classList.add('hidden'); });
+    if(closeMembers) closeMembers.addEventListener('click', () => membersModal.classList.add('hidden'));
+    if(btnCreateFinal) btnCreateFinal.addEventListener('click', () => { const nombre = inpNombre.value.trim(); if(!nombre) return alert("Nombre requerido"); fetch('php/crear_quiniela.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nombre: nombre, tipo: radioKingniela.checked?'kingniela':'fantasy', dificultad: selectDifficulty.value, amigos: amigosSeleccionados }) }).then(r=>r.json()).then(resp => { if(resp.success) { generatedCodeDisplay.textContent = resp.codigo; createQuinielaView.classList.add('hidden'); successModal.classList.remove('hidden'); cargarMisQuinielas(); } }); });
     if(btnFinish) btnFinish.addEventListener('click', () => { successModal.classList.add('hidden'); quinielaListView.classList.remove('hidden'); });
 
     // Tabs
@@ -325,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(tabId).classList.remove('hidden');
         if(tabId === 'tab-kingnielar' && quinielaActiva) renderKingnielarTab(quinielaActiva);
         if(tabId === 'tab-clasificacion' && quinielaActiva) renderClasificacionTab();
+        if(tabId === 'tab-chat' && quinielaActiva) loadGroupChat();
     }
     
     cargarMisQuinielas();
